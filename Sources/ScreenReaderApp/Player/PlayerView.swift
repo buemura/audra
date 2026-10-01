@@ -16,6 +16,7 @@ struct PlayerView: View {
                     .foregroundStyle(.secondary)
                     .frame(width: 36, height: 36)
                     .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .allowsHitTesting(false)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.title)
@@ -27,6 +28,7 @@ struct PlayerView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+                .allowsHitTesting(false)
 
                 Spacer(minLength: 0)
 
@@ -85,6 +87,8 @@ private struct WindowDragArea: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 
     private final class DragView: NSView {
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
         override func mouseDown(with event: NSEvent) {
             window?.performDrag(with: event)
         }

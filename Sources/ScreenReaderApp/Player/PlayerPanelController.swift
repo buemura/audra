@@ -19,7 +19,8 @@ final class PlayerPanelController {
     private var isShown = false
 
     init(viewModel: PlayerViewModel) {
-        // Borderless panels can't become key, so clicks never pull focus from the other app.
+        // .nonactivatingPanel keeps clicks from activating the app, so the source app and its
+        // selection stay frontmost; borderless also keeps the panel from becoming key.
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: PlayerView.size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -35,7 +36,13 @@ final class PlayerPanelController {
         panel.hasShadow = true
         panel.contentView = FirstMouseHostingView(rootView: PlayerView(model: viewModel))
 
-        if !panel.setFrameUsingName(Self.autosaveName) {
+        // The saved frame may be from an older layout size or a monitor that's no longer attached.
+        if panel.setFrameUsingName(Self.autosaveName) {
+            panel.setContentSize(PlayerView.size)
+            if !NSScreen.screens.contains(where: { $0.visibleFrame.intersects(panel.frame) }) {
+                placeAtBottomRight()
+            }
+        } else {
             placeAtBottomRight()
         }
         panel.setFrameAutosaveName(Self.autosaveName)
