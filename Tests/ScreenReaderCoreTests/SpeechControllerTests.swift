@@ -83,4 +83,62 @@ final class SpeechControllerTests: XCTestCase {
         XCTAssertEqual(controller.state, .idle)
         XCTAssertEqual(synthesizer.calls, [])
     }
+
+    func testChangeRateWhileSpeakingRestartsFromCurrentWordAtNewRate() {
+        makeController()
+        controller.speak("Hello brave new world", voiceID: "v1", rate: 0.5)
+        synthesizer.progress(to: 6) // about to say "brave"
+
+        controller.changeRate(0.7)
+
+        XCTAssertEqual(synthesizer.calls.suffix(2), [
+            .stop,
+            .speak(text: "brave new world", voiceID: "v1", rate: 0.7),
+        ])
+        XCTAssertEqual(controller.state, .speaking)
+    }
+
+    func testChangeRateBeforeAnyProgressRestartsWholeText() {
+        makeController()
+        controller.speak("Hello", voiceID: nil, rate: 0.5)
+
+        controller.changeRate(0.7)
+
+        XCTAssertEqual(synthesizer.calls.last, .speak(text: "Hello", voiceID: nil, rate: 0.7))
+    }
+
+    func testProgressIsTrackedRelativeToRestartedText() {
+        makeController()
+        controller.speak("Hello brave new world", voiceID: nil, rate: 0.5)
+        synthesizer.progress(to: 6)
+        controller.changeRate(0.7) // now speaking "brave new world"
+        synthesizer.progress(to: 6) // about to say "new"
+
+        controller.changeRate(0.6)
+
+        XCTAssertEqual(synthesizer.calls.last, .speak(text: "new world", voiceID: nil, rate: 0.6))
+    }
+
+    func testChangeRateWhilePausedAppliesOnResume() {
+        makeController()
+        controller.speak("Hello brave new world", voiceID: nil, rate: 0.5)
+        synthesizer.progress(to: 6)
+        controller.pause()
+
+        controller.changeRate(0.7)
+        XCTAssertEqual(controller.state, .paused)
+        XCTAssertFalse(synthesizer.calls.contains(.speak(text: "brave new world", voiceID: nil, rate: 0.7)))
+
+        controller.resume()
+        XCTAssertEqual(synthesizer.calls.last, .speak(text: "brave new world", voiceID: nil, rate: 0.7))
+        XCTAssertFalse(synthesizer.calls.contains(.resume))
+        XCTAssertEqual(controller.state, .speaking)
+    }
+
+    func testChangeRateWhileIdleDoesNothing() {
+        makeController()
+        controller.changeRate(0.7)
+        XCTAssertEqual(synthesizer.calls, [])
+        XCTAssertEqual(controller.state, .idle)
+    }
 }

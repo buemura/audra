@@ -10,6 +10,7 @@ final class FakeSynthesizer: SpeechSynthesizing {
     }
 
     var onFinish: (@MainActor () -> Void)?
+    var onProgress: (@MainActor (Int) -> Void)?
     private(set) var calls: [Call] = []
 
     func speak(_ text: String, voiceID: String?, rate: Float) {
@@ -22,4 +23,7 @@ final class FakeSynthesizer: SpeechSynthesizing {
 
     /// Simulates the current utterance ending naturally.
     func finish() { onFinish?() }
+
+    /// Simulates the engine starting the word at `offset` (UTF-16) of the current utterance.
+    func progress(to offset: Int) { onProgress?(offset) }
 }
