@@ -1,4 +1,5 @@
 import AppKit
+import CoreGraphics
 import KeyboardShortcuts
 import ScreenReaderCore
 
@@ -17,7 +18,15 @@ final class AppModel: ObservableObject {
         let speech = SpeechController(synthesizer: AVSpeechSynthesizerAdapter())
         let textSource = FirstAvailableTextSource([
             AccessibilityTextSource(),
-            ClipboardTextSource(pasteboard: SystemPasteboard(), copySender: CopyKeySender()),
+            ClipboardTextSource(
+                pasteboard: SystemPasteboard(),
+                copySender: CopyKeySender(),
+                modifiersHeld: {
+                    !CGEventSource.flagsState(.hidSystemState)
+                        .intersection([.maskAlternate, .maskShift, .maskControl, .maskCommand])
+                        .isEmpty
+                }
+            ),
         ])
         self.settings = settings
         self.speech = speech

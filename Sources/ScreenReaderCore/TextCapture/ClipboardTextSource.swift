@@ -29,27 +29,36 @@ public protocol CopyCommandSending {
 public final class ClipboardTextSource: SelectedTextSource {
     private let pasteboard: any PasteboardAccessing
     private let copySender: any CopyCommandSending
+    private let modifiersHeld: @MainActor () -> Bool
     private let timeout: Duration
     private let pollInterval: Duration
 
     public init(
         pasteboard: any PasteboardAccessing,
         copySender: any CopyCommandSending,
+        modifiersHeld: @escaping @MainActor () -> Bool = { false },
         timeout: Duration = .milliseconds(300),
         pollInterval: Duration = .milliseconds(10)
     ) {
         self.pasteboard = pasteboard
         self.copySender = copySender
+        self.modifiersHeld = modifiersHeld
         self.timeout = timeout
         self.pollInterval = pollInterval
     }
 
     public func selectedText() async -> String? {
+        let clock = ContinuousClock()
+        // The hotkey fires while its modifiers are usually still held; ⌥/⇧ + ⌘C would trigger other shortcuts.
+        let modifierDeadline = clock.now.advanced(by: timeout)
+        while modifiersHeld(), clock.now < modifierDeadline {
+            try? await Task.sleep(for: pollInterval)
+        }
+
         let saved = pasteboard.snapshot()
         let initialChangeCount = pasteboard.changeCount
         copySender.sendCopyCommand()
 
-        let clock = ContinuousClock()
         let deadline = clock.now.advanced(by: timeout)
         while pasteboard.changeCount == initialChangeCount, clock.now < deadline {
             try? await Task.sleep(for: pollInterval)
