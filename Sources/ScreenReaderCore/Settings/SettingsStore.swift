@@ -9,6 +9,7 @@ public final class SettingsStore: ObservableObject {
         static let defaultVoiceID = "defaultVoiceID"
         static let autoDetectLanguage = "autoDetectLanguage"
         static let languageVoiceOverrides = "languageVoiceOverrides"
+        static let alwaysShowPlayer = "alwaysShowPlayer"
     }
 
     private let defaults: UserDefaults
@@ -26,6 +27,11 @@ public final class SettingsStore: ObservableObject {
         didSet { defaults.set(autoDetectLanguage, forKey: Key.autoDetectLanguage) }
     }
 
+    /// Keep the floating player visible while idle, not only while reading.
+    @Published public var alwaysShowPlayer: Bool {
+        didSet { defaults.set(alwaysShowPlayer, forKey: Key.alwaysShowPlayer) }
+    }
+
     /// Primary language code ("en", "pt", …) → voice identifier.
     @Published public private(set) var languageVoiceOverrides: [String: String] {
         didSet { defaults.set(languageVoiceOverrides, forKey: Key.languageVoiceOverrides) }
@@ -36,6 +42,7 @@ public final class SettingsStore: ObservableObject {
         speed = SpeechSpeed(rawValue: defaults.double(forKey: Key.speed)) ?? .normal
         defaultVoiceID = defaults.string(forKey: Key.defaultVoiceID)
         autoDetectLanguage = defaults.object(forKey: Key.autoDetectLanguage) as? Bool ?? true
+        alwaysShowPlayer = defaults.bool(forKey: Key.alwaysShowPlayer)
         languageVoiceOverrides = defaults.dictionary(forKey: Key.languageVoiceOverrides) as? [String: String] ?? [:]
     }
 
