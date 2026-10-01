@@ -7,6 +7,7 @@ A small macOS menu bar app that reads aloud the text you select in any applicati
 - Reads aloud selected text from any app that allows text selection.
 - Global hotkey (default **⌥⇧S**, configurable): press to read, press again to stop.
 - Menu bar controls: Read Selection, Pause/Resume, Stop, Speed.
+- Floating player that stays on top of other apps while reading: play/pause, slower, faster and stop. It hides itself a few seconds after reading stops; turn on **Show Player Always** in the menu bar to keep it visible. Drag it anywhere — it remembers its position.
 - Speeds: 0.5x, 1x, 1.5x, 2x, 2.5x.
 - Detects the language of the text and picks a matching voice; per-language voice overrides.
 - Uses the voices installed on your Mac. No internet connection needed.
@@ -29,6 +30,8 @@ A small macOS menu bar app that reads aloud the text you select in any applicati
 
 Select text anywhere and press **⌥⇧S**. Press it again to stop. Change the shortcut, speed and voices from the menu bar icon → **Settings…**.
 
+You can also control reading from the floating player: ▶ reads the current selection (or pauses/resumes), ◀◀ / ▶▶ change the speed, ■ stops.
+
 More voices (including Enhanced/Premium quality) can be downloaded in System Settings → Accessibility → Spoken Content → System Voice → Manage Voices.
 
 ### How selected text is captured
@@ -38,6 +41,7 @@ The app first asks the Accessibility API for the selection. Some apps (e.g. Chro
 ## Development
 
 ```bash
+make run                   # build, reset the Accessibility grant and open the app
 swift test                 # run unit tests
 ./scripts/build-app.sh     # build "build/Screen Reader.app" (universal, ad-hoc signed)
 ./scripts/make-dmg.sh      # build build/ScreenReader-<version>.dmg

@@ -141,4 +141,37 @@ final class SpeechControllerTests: XCTestCase {
         XCTAssertEqual(synthesizer.calls, [])
         XCTAssertEqual(controller.state, .idle)
     }
+
+    func testCurrentTextAndVoiceAreNilBeforeSpeaking() {
+        makeController()
+        XCTAssertNil(controller.currentText)
+        XCTAssertNil(controller.currentVoiceID)
+    }
+
+    func testSpeakRecordsCurrentTextAndVoice() {
+        makeController()
+        controller.speak("Hello", voiceID: "v1", rate: 0.5)
+        XCTAssertEqual(controller.currentText, "Hello")
+        XCTAssertEqual(controller.currentVoiceID, "v1")
+
+        controller.speak("Bye", voiceID: nil, rate: 0.5)
+        XCTAssertEqual(controller.currentText, "Bye")
+        XCTAssertNil(controller.currentVoiceID)
+    }
+
+    func testCurrentTextKeepsOriginalTextAfterRateChangeStopAndFinish() {
+        makeController()
+        controller.speak("Hello brave new world", voiceID: "v1", rate: 0.5)
+        synthesizer.progress(to: 6)
+        controller.changeRate(0.7)
+        XCTAssertEqual(controller.currentText, "Hello brave new world")
+
+        controller.stop()
+        XCTAssertEqual(controller.currentText, "Hello brave new world")
+        XCTAssertEqual(controller.currentVoiceID, "v1")
+
+        controller.speak("Again", voiceID: "v1", rate: 0.5)
+        synthesizer.finish()
+        XCTAssertEqual(controller.currentText, "Again")
+    }
 }

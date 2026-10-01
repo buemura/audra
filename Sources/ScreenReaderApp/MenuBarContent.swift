@@ -35,6 +35,8 @@ struct MenuBarContent: View {
             }
         }
 
+        Toggle("Show Player Always", isOn: $settings.alwaysShowPlayer)
+
         Divider()
 
         Button("Settings…") {

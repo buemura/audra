@@ -24,4 +24,17 @@ final class SpeechSpeedTests: XCTestCase {
             XCTAssertLessThanOrEqual(rate, AVSpeechUtteranceMaximumSpeechRate)
         }
     }
+
+    func testFasterStepsToNextSpeedAndStopsAtTheTop() {
+        XCTAssertEqual(SpeechSpeed.half.faster, .normal)
+        XCTAssertEqual(SpeechSpeed.normal.faster, .oneAndHalf)
+        XCTAssertEqual(SpeechSpeed.double.faster, .twoAndHalf)
+        XCTAssertNil(SpeechSpeed.twoAndHalf.faster)
+    }
+
+    func testSlowerStepsToPreviousSpeedAndStopsAtTheBottom() {
+        XCTAssertEqual(SpeechSpeed.twoAndHalf.slower, .double)
+        XCTAssertEqual(SpeechSpeed.normal.slower, .half)
+        XCTAssertNil(SpeechSpeed.half.slower)
+    }
 }

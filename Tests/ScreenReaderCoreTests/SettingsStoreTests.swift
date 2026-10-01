@@ -55,4 +55,14 @@ final class SettingsStoreTests: XCTestCase {
         defaults.set(3.7, forKey: "speechSpeed")
         XCTAssertEqual(SettingsStore(defaults: defaults).speed, .normal)
     }
+
+    func testAlwaysShowPlayerDefaultsToFalse() {
+        XCTAssertFalse(SettingsStore(defaults: makeDefaults()).alwaysShowPlayer)
+    }
+
+    func testAlwaysShowPlayerPersists() {
+        let defaults = makeDefaults()
+        SettingsStore(defaults: defaults).alwaysShowPlayer = true
+        XCTAssertTrue(SettingsStore(defaults: defaults).alwaysShowPlayer)
+    }
 }

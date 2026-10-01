@@ -11,6 +11,11 @@ public final class SpeechController: ObservableObject {
     }
 
     @Published public private(set) var state: State = .idle
+    /// The text of the current (or last) reading, as originally given to `speak`.
+    /// Kept in memory only; never persisted.
+    @Published public private(set) var currentText: String?
+    /// The voice of the current (or last) reading. nil = system default.
+    @Published public private(set) var currentVoiceID: String?
     private let synthesizer: any SpeechSynthesizing
 
     // What is being spoken, so it can be restarted at a new rate.
@@ -35,6 +40,8 @@ public final class SpeechController: ObservableObject {
     /// Speaks `text`, replacing anything currently playing.
     public func speak(_ text: String, voiceID: String?, rate: Float) {
         if state != .idle { synthesizer.stop() }
+        currentText = text
+        currentVoiceID = voiceID
         self.text = text
         self.voiceID = voiceID
         self.rate = rate
