@@ -12,6 +12,7 @@ final class AppModel: ObservableObject {
 
     private let coordinator: ReadSelectionCoordinator
     private var permissionTimer: Timer?
+    private var playerPanel: PlayerPanelController?
 
     init() {
         let settings = SettingsStore()
@@ -47,6 +48,14 @@ final class AppModel: ObservableObject {
             AccessibilityPermission.request()
             pollForPermission()
         }
+
+        let player = PlayerViewModel(
+            speech: speech,
+            settings: settings,
+            availableVoices: { SystemVoices.all() },
+            readSelection: { [weak self] in await self?.readSelection() }
+        )
+        playerPanel = PlayerPanelController(viewModel: player)
     }
 
     /// Hotkey action: stop if speaking or paused, otherwise read the selection.
