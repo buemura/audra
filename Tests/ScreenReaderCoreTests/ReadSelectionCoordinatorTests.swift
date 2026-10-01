@@ -142,4 +142,42 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         ))
         XCTAssertEqual(speech.state, .speaking)
     }
+
+    func testChangingDefaultVoiceWhileSpeakingAppliesImmediately() async {
+        let coordinator = makeCoordinator(selection: "Hello there", detectedLanguage: nil)
+        await coordinator.toggle()
+
+        settings.defaultVoiceID = portuguese.id
+
+        XCTAssertEqual(synthesizer.calls.last, .speak(
+            text: "Hello there", voiceID: "pt.luciana", rate: SpeechSpeed.normal.utteranceRate
+        ))
+        XCTAssertEqual(speech.state, .speaking)
+    }
+
+    func testChangingOverrideForDetectedLanguageWhileSpeakingAppliesImmediately() async {
+        let coordinator = makeCoordinator(selection: "Hello there", detectedLanguage: "en")
+        await coordinator.toggle()
+
+        settings.setVoiceOverride(portuguese.id, forLanguage: "en")
+
+        XCTAssertEqual(synthesizer.calls.last, .speak(
+            text: "Hello there", voiceID: "pt.luciana", rate: SpeechSpeed.normal.utteranceRate
+        ))
+    }
+
+    func testChangingVoiceThatDoesNotApplyLeavesSpeechAlone() async {
+        let coordinator = makeCoordinator(selection: "Hello there", detectedLanguage: "en")
+        await coordinator.toggle()
+
+        settings.setVoiceOverride(english.id, forLanguage: "pt")
+
+        XCTAssertEqual(synthesizer.calls.count, 1)
+    }
+
+    func testChangingVoiceWhileIdleDoesNothing() async {
+        _ = makeCoordinator(selection: "Hello there", detectedLanguage: "en")
+        settings.defaultVoiceID = portuguese.id
+        XCTAssertEqual(synthesizer.calls, [])
+    }
 }
