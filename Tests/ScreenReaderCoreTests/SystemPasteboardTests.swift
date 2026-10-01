@@ -30,6 +30,23 @@ final class SystemPasteboardTests: XCTestCase {
         XCTAssertEqual(nsPasteboard.data(forType: customType), Data([0xDE, 0xAD]))
     }
 
+    func testRestoreMarksContentsAsTransient() {
+        let nsPasteboard = makePasteboard()
+        let transientType = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
+        nsPasteboard.clearContents()
+        nsPasteboard.setString("hello", forType: .string)
+
+        let pasteboard = SystemPasteboard(pasteboard: nsPasteboard)
+        let snapshot = pasteboard.snapshot()
+        nsPasteboard.clearContents()
+        nsPasteboard.setString("clobbered", forType: .string)
+        pasteboard.restore(snapshot)
+
+        XCTAssertNotNil(nsPasteboard.data(forType: transientType))
+        XCTAssertEqual(pasteboard.readString(), "hello")
+        XCTAssertFalse(pasteboard.snapshot().items.contains { $0.keys.contains(transientType.rawValue) })
+    }
+
     func testRestoringAnEmptySnapshotLeavesPasteboardEmpty() {
         let nsPasteboard = makePasteboard()
         nsPasteboard.clearContents()

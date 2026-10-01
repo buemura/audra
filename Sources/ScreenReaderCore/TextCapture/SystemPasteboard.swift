@@ -3,6 +3,9 @@ import AppKit
 /// `PasteboardAccessing` backed by a real `NSPasteboard` (the general clipboard by default).
 @MainActor
 public final class SystemPasteboard: PasteboardAccessing {
+    /// nspasteboard.org convention: clipboard managers ignore writes carrying this marker.
+    private static let transientType = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
+
     private let pasteboard: NSPasteboard
 
     public init(pasteboard: NSPasteboard = .general) {
@@ -14,7 +17,7 @@ public final class SystemPasteboard: PasteboardAccessing {
     public func snapshot() -> PasteboardSnapshot {
         let items = (pasteboard.pasteboardItems ?? []).map { item in
             Dictionary(
-                item.types.compactMap { type in item.data(forType: type).map { (type.rawValue, $0) } },
+                item.types.filter { $0 != Self.transientType }.compactMap { type in item.data(forType: type).map { (type.rawValue, $0) } },
                 uniquingKeysWith: { first, _ in first }
             )
         }
@@ -30,7 +33,8 @@ public final class SystemPasteboard: PasteboardAccessing {
             }
             return item
         }
-        if !items.isEmpty {
+        if let first = items.first {
+            first.setData(Data(), forType: Self.transientType)
             pasteboard.writeObjects(items)
         }
     }

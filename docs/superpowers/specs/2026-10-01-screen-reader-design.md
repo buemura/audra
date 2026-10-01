@@ -34,4 +34,5 @@ Windows/Linux, auto-read on selection, highlighting spoken words, Developer ID s
 
 - The ⌘C fallback uses the ANSI "C" key code; non-QWERTY layouts that remap ⌘-shortcuts by position may not copy.
 - Clipboard-history apps may record the text copied by the ⌘C fallback (the copy is performed by the source app).
+- The restored clipboard is marked `org.nspasteboard.TransientType`; clipboard tools that don't honour that marker may still log the restore.
 - Ad-hoc signing means the Accessibility grant must be re-done after every rebuild, and Gatekeeper will warn on first open of a downloaded DMG.
