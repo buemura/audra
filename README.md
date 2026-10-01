@@ -15,12 +15,14 @@ A small macOS menu bar app that reads aloud the text you select in any applicati
 ## Requirements
 
 - macOS 14 Sonoma or later
-- To build: Xcode (Swift 6 toolchain)
+- To build: Xcode 16.3 or later (Swift 6.1+ toolchain)
 
 ## Install
 
 1. Download `ScreenReader-<version>.dmg`, open it, drag **Screen Reader** to Applications.
-2. The app is not notarized yet, so the first time: right-click the app → **Open** → **Open**.
+2. The app is not notarized yet, so macOS blocks the first launch:
+   - **macOS 14:** right-click the app → **Open** → **Open**.
+   - **macOS 15 and later:** open the app once (it will be blocked), then go to System Settings → Privacy & Security, scroll down and click **Open Anyway**.
 3. Grant **Accessibility** access when asked (System Settings → Privacy & Security → Accessibility). It is needed to read other apps' selections.
 
 ## Usage
