@@ -41,6 +41,7 @@ The app first asks the Accessibility API for the selection. Some apps (e.g. Chro
 ## Development
 
 ```bash
+make run                   # build, reset the Accessibility grant and open the app
 swift test                 # run unit tests
 ./scripts/build-app.sh     # build "build/Screen Reader.app" (universal, ad-hoc signed)
 ./scripts/make-dmg.sh      # build build/ScreenReader-<version>.dmg
