@@ -130,4 +130,16 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
             .speak(text: "Hello", voiceID: "pt.luciana", rate: SpeechSpeed.normal.utteranceRate),
         ])
     }
+
+    func testChangingSpeedWhileSpeakingAppliesImmediately() async {
+        let coordinator = makeCoordinator(selection: "Hello there", detectedLanguage: "en")
+        await coordinator.toggle()
+
+        settings.speed = .double
+
+        XCTAssertEqual(synthesizer.calls.last, .speak(
+            text: "Hello there", voiceID: "en.samantha", rate: SpeechSpeed.double.utteranceRate
+        ))
+        XCTAssertEqual(speech.state, .speaking)
+    }
 }

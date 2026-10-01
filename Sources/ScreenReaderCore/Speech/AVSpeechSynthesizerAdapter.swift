@@ -4,6 +4,7 @@ import AVFoundation
 @MainActor
 public final class AVSpeechSynthesizerAdapter: NSObject, SpeechSynthesizing {
     public var onFinish: (@MainActor () -> Void)?
+    public var onProgress: (@MainActor (Int) -> Void)?
     private let synthesizer = AVSpeechSynthesizer()
     private var currentUtterance: AVSpeechUtterance?
 
@@ -43,6 +44,19 @@ extension AVSpeechSynthesizerAdapter: AVSpeechSynthesizerDelegate {
             guard let current = self.currentUtterance, ObjectIdentifier(current) == finished else { return }
             self.currentUtterance = nil
             self.onFinish?()
+        }
+    }
+
+    nonisolated public func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        willSpeakRangeOfSpeechString characterRange: NSRange,
+        utterance: AVSpeechUtterance
+    ) {
+        let speaking = ObjectIdentifier(utterance)
+        let offset = characterRange.location
+        Task { @MainActor in
+            guard let current = self.currentUtterance, ObjectIdentifier(current) == speaking else { return }
+            self.onProgress?(offset)
         }
     }
 }

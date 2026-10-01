@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// Glue between the hotkey/menu and the speech engine:
@@ -11,6 +12,7 @@ public final class ReadSelectionCoordinator {
     private let availableVoices: () -> [VoiceInfo]
     private let onNoText: () -> Void
     private var isCapturing = false
+    private var speedSubscription: AnyCancellable?
 
     public init(
         textSource: any SelectedTextSource,
@@ -26,6 +28,11 @@ public final class ReadSelectionCoordinator {
         self.languageDetector = languageDetector
         self.availableVoices = availableVoices
         self.onNoText = onNoText
+
+        // Apply speed changes to speech that is already playing, not just the next read.
+        speedSubscription = settings.$speed
+            .dropFirst()
+            .sink { [weak speech] speed in speech?.changeRate(speed.utteranceRate) }
     }
 
     /// Hotkey behaviour: stop if anything is playing or paused, otherwise read the selection.
