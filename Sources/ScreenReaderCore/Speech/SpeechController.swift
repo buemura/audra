@@ -24,7 +24,7 @@ public final class SpeechController: ObservableObject {
     private var rate: Float = 0
     /// UTF-16 offset in `text` of the word currently being spoken.
     private var spokenOffset = 0
-    /// Set when the rate changed while paused: resuming must restart rather than continue.
+    /// Set when the rate or voice changed while paused: resuming must restart rather than continue.
     private var restartOnResume = false
 
     public init(synthesizer: any SpeechSynthesizing) {
@@ -56,8 +56,21 @@ public final class SpeechController: ObservableObject {
     /// happens on resume.
     public func changeRate(_ rate: Float) {
         guard state != .idle, rate != self.rate else { return }
-        let remaining = (text as NSString).substring(from: min(spokenOffset, (text as NSString).length))
         self.rate = rate
+        restartFromCurrentWord()
+    }
+
+    /// Applies a new voice to speech in progress, restarting the rest of the text from the
+    /// current word like `changeRate`. nil = system default.
+    public func changeVoice(_ voiceID: String?) {
+        guard state != .idle, voiceID != self.voiceID else { return }
+        self.voiceID = voiceID
+        currentVoiceID = voiceID
+        restartFromCurrentWord()
+    }
+
+    private func restartFromCurrentWord() {
+        let remaining = (text as NSString).substring(from: min(spokenOffset, (text as NSString).length))
         text = remaining
         spokenOffset = 0
         synthesizer.stop()
