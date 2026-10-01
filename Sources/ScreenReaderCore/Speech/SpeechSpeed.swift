@@ -28,4 +28,16 @@ public enum SpeechSpeed: Double, CaseIterable, Identifiable, Codable {
         case .twoAndHalf: return 0.69
         }
     }
+
+    /// The next slower speed, or nil at the slowest.
+    public var slower: SpeechSpeed? { neighbor(offset: -1) }
+
+    /// The next faster speed, or nil at the fastest.
+    public var faster: SpeechSpeed? { neighbor(offset: 1) }
+
+    private func neighbor(offset: Int) -> SpeechSpeed? {
+        let all = Self.allCases
+        let index = all.firstIndex(of: self)! + offset
+        return all.indices.contains(index) ? all[index] : nil
+    }
 }
