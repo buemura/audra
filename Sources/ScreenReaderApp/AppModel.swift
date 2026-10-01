@@ -7,6 +7,7 @@ final class AppModel: ObservableObject {
     let settings: SettingsStore
     let speech: SpeechController
     @Published private(set) var hasAccessibilityPermission = AccessibilityPermission.isGranted
+    @Published private(set) var voices: [VoiceInfo] = SystemVoices.all()
 
     private let coordinator: ReadSelectionCoordinator
     private var permissionTimer: Timer?
@@ -49,6 +50,11 @@ final class AppModel: ObservableObject {
     func readSelection() async {
         guard ensurePermission() else { return }
         await coordinator.readSelection()
+    }
+
+    /// Re-reads installed voices (the user may have downloaded new ones in System Settings).
+    func refreshVoices() {
+        voices = SystemVoices.all()
     }
 
     private func ensurePermission() -> Bool {

@@ -13,6 +13,7 @@ struct MenuBarContent: View {
     @ObservedObject var model: AppModel
     @ObservedObject var speech: SpeechController
     @ObservedObject var settings: SettingsStore
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         if !model.hasAccessibilityPermission {
@@ -36,6 +37,12 @@ struct MenuBarContent: View {
 
         Divider()
 
+        Button("Settings…") {
+            // Menu bar apps aren't active, so bring the window to the front explicitly.
+            NSApp.activate()
+            openSettings()
+        }
+        .keyboardShortcut(",")
         Button("Quit Screen Reader") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }

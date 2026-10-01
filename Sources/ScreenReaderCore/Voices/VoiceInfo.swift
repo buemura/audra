@@ -32,3 +32,14 @@ public struct VoiceInfo: Identifiable, Hashable {
         return primary.lowercased()
     }
 }
+
+extension VoiceInfo {
+    /// Label for voice pickers, e.g. "Daniel (en-GB, Enhanced)".
+    public var menuLabel: String {
+        switch quality {
+        case .standard: return "\(name) (\(language))"
+        case .enhanced: return "\(name) (\(language), Enhanced)"
+        case .premium: return "\(name) (\(language), Premium)"
+        }
+    }
+}

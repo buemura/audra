@@ -10,5 +10,9 @@ struct ScreenReaderApp: App {
         } label: {
             MenuBarLabel(speech: model.speech)
         }
+
+        Settings {
+            SettingsView(model: model, settings: model.settings)
+        }
     }
 }
