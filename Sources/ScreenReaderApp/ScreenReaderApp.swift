@@ -6,7 +6,7 @@ struct ScreenReaderApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarContent(model: model, speech: model.speech, settings: model.settings)
+            MenuBarContent(model: model, speech: model.speech, settings: model.settings, modelStore: model.modelStore)
         } label: {
             MenuBarLabel(speech: model.speech)
         }

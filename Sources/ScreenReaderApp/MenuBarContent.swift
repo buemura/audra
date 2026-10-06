@@ -13,9 +13,14 @@ struct MenuBarContent: View {
     @ObservedObject var model: AppModel
     @ObservedObject var speech: SpeechController
     @ObservedObject var settings: SettingsStore
+    @ObservedObject var modelStore: KokoroModelStore
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
+        if case let .downloading(progress) = modelStore.state {
+            Text("Downloading natural voices… \(Int((progress * 100).rounded(.down)))%")
+            Divider()
+        }
         if !model.hasAccessibilityPermission {
             Button("⚠️ Grant Accessibility Access…") { AccessibilityPermission.openSystemSettings() }
             Divider()
