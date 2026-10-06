@@ -20,9 +20,9 @@ A macOS menu bar app that reads aloud the text currently selected in any applica
 | Speeds | 0.5x, 1x, 1.5x, 2x, 2.5x. Mapped to `AVSpeechUtterance.rate` via a tuned table (1x = `AVSpeechUtteranceDefaultSpeechRate`). |
 | Languages | On-device detection (`NLLanguageRecognizer`, confidence ≥ 0.5). Voice choice: per-language override → default voice if it speaks that language → best-quality installed voice for that language → default voice → system default. Auto-detect can be turned off (then: default voice always). |
 | Settings | Settings window: General (hotkey recorder, speed, default voice, auto-detect toggle) and Voices (per-language voice override). Persisted in `UserDefaults`. |
-| Privacy | No network access. Selected text is never logged, persisted or transmitted. Clipboard restored after the ⌘C fallback. |
+| Privacy | No network access. Selected text is never logged, persisted or transmitted. Clipboard restored after the ⌘C fallback. Superseded by 2026-10-01-natural-voices-design.md: the one-time model download is the only network access. |
 | Permissions | Accessibility. Prompt on launch if missing; menu shows a warning item linking to System Settings; app polls until granted. |
-| Platform | macOS 14+. Universal binary (arm64 + x86_64). |
+| Platform | macOS 14+. Universal binary (arm64 + x86_64). Now macOS 15+, Apple Silicon only (natural voices design). |
 | Build | Swift Package (`swift build` / `swift test`); `scripts/build-app.sh` assembles an ad-hoc-signed `.app`; `scripts/make-dmg.sh` wraps it in a DMG. Developer ID signing + notarization is out of scope for v1 (documented as a later step). |
 | Dependencies | `KeyboardShortcuts` (sindresorhus) for the global hotkey and recorder UI — app target only. |
 
