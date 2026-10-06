@@ -45,7 +45,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         await coordinator.toggle()
 
         XCTAssertEqual(synthesizer.calls, [
-            .speak(text: "Olá mundo", voiceID: "pt.luciana", rate: SpeechSpeed.double.utteranceRate),
+            .speak(text: "Olá mundo", voiceID: "pt.luciana", speed: .double),
         ])
         XCTAssertEqual(speech.state, .speaking)
     }
@@ -54,7 +54,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         let coordinator = makeCoordinator(selection: "\n  Hello there \t", detectedLanguage: "en")
         await coordinator.toggle()
         XCTAssertEqual(synthesizer.calls, [
-            .speak(text: "Hello there", voiceID: "en.samantha", rate: SpeechSpeed.normal.utteranceRate),
+            .speak(text: "Hello there", voiceID: "en.samantha", speed: .normal),
         ])
     }
 
@@ -75,7 +75,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
 
     func testToggleWhileSpeakingStopsWithoutReadingAgain() async {
         let coordinator = makeCoordinator(selection: "Hello", detectedLanguage: "en")
-        speech.speak("Earlier", voiceID: nil, rate: 0.5)
+        speech.speak("Earlier", voiceID: nil, speed: .normal)
 
         await coordinator.toggle()
 
@@ -86,7 +86,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
 
     func testToggleWhilePausedStops() async {
         let coordinator = makeCoordinator(selection: "Hello", detectedLanguage: "en")
-        speech.speak("Earlier", voiceID: nil, rate: 0.5)
+        speech.speak("Earlier", voiceID: nil, speed: .normal)
         speech.pause()
 
         await coordinator.toggle()
@@ -97,13 +97,13 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
 
     func testReadSelectionWhileSpeakingReplacesSpeech() async {
         let coordinator = makeCoordinator(selection: "New text", detectedLanguage: "en")
-        speech.speak("Earlier", voiceID: nil, rate: 0.5)
+        speech.speak("Earlier", voiceID: nil, speed: .normal)
 
         await coordinator.readSelection()
 
         XCTAssertEqual(synthesizer.calls.suffix(2), [
             .stop,
-            .speak(text: "New text", voiceID: "en.samantha", rate: SpeechSpeed.normal.utteranceRate),
+            .speak(text: "New text", voiceID: "en.samantha", speed: .normal),
         ])
         XCTAssertEqual(speech.state, .speaking)
     }
@@ -116,7 +116,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         await coordinator.toggle()
 
         XCTAssertEqual(synthesizer.calls, [
-            .speak(text: "Olá mundo", voiceID: "en.samantha", rate: SpeechSpeed.normal.utteranceRate),
+            .speak(text: "Olá mundo", voiceID: "en.samantha", speed: .normal),
         ])
     }
 
@@ -127,7 +127,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         await coordinator.toggle()
 
         XCTAssertEqual(synthesizer.calls, [
-            .speak(text: "Hello", voiceID: "pt.luciana", rate: SpeechSpeed.normal.utteranceRate),
+            .speak(text: "Hello", voiceID: "pt.luciana", speed: .normal),
         ])
     }
 
@@ -138,7 +138,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         settings.speed = .double
 
         XCTAssertEqual(synthesizer.calls.last, .speak(
-            text: "Hello there", voiceID: "en.samantha", rate: SpeechSpeed.double.utteranceRate
+            text: "Hello there", voiceID: "en.samantha", speed: .double
         ))
         XCTAssertEqual(speech.state, .speaking)
     }
@@ -150,7 +150,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         settings.defaultVoiceID = portuguese.id
 
         XCTAssertEqual(synthesizer.calls.last, .speak(
-            text: "Hello there", voiceID: "pt.luciana", rate: SpeechSpeed.normal.utteranceRate
+            text: "Hello there", voiceID: "pt.luciana", speed: .normal
         ))
         XCTAssertEqual(speech.state, .speaking)
     }
@@ -162,7 +162,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
         settings.setVoiceOverride(portuguese.id, forLanguage: "en")
 
         XCTAssertEqual(synthesizer.calls.last, .speak(
-            text: "Hello there", voiceID: "pt.luciana", rate: SpeechSpeed.normal.utteranceRate
+            text: "Hello there", voiceID: "pt.luciana", speed: .normal
         ))
     }
 

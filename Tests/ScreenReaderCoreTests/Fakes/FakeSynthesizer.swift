@@ -1,9 +1,9 @@
 @testable import ScreenReaderCore
 
 @MainActor
-final class FakeSynthesizer: SpeechSynthesizing {
+class FakeSynthesizer: SpeechSynthesizing {
     enum Call: Equatable {
-        case speak(text: String, voiceID: String?, rate: Float)
+        case speak(text: String, voiceID: String?, speed: SpeechSpeed)
         case stop
         case pause
         case resume
@@ -13,8 +13,8 @@ final class FakeSynthesizer: SpeechSynthesizing {
     var onProgress: (@MainActor (Int) -> Void)?
     private(set) var calls: [Call] = []
 
-    func speak(_ text: String, voiceID: String?, rate: Float) {
-        calls.append(.speak(text: text, voiceID: voiceID, rate: rate))
+    func speak(_ text: String, voiceID: String?, speed: SpeechSpeed) {
+        calls.append(.speak(text: text, voiceID: voiceID, speed: speed))
     }
 
     func stop() { calls.append(.stop) }

@@ -13,12 +13,12 @@ public final class AVSpeechSynthesizerAdapter: NSObject, SpeechSynthesizing {
         synthesizer.delegate = self
     }
 
-    public func speak(_ text: String, voiceID: String?, rate: Float) {
+    public func speak(_ text: String, voiceID: String?, speed: SpeechSpeed) {
         let utterance = AVSpeechUtterance(string: text)
         if let voiceID, let voice = AVSpeechSynthesisVoice(identifier: voiceID) {
             utterance.voice = voice
         }
-        utterance.rate = rate
+        utterance.rate = speed.utteranceRate
         currentUtterance = utterance
         synthesizer.speak(utterance)
     }

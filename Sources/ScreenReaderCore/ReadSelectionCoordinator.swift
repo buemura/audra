@@ -33,7 +33,7 @@ public final class ReadSelectionCoordinator {
         // Apply speed changes to speech that is already playing, not just the next read.
         speedSubscription = settings.$speed
             .dropFirst()
-            .sink { [weak speech] speed in speech?.changeRate(speed.utteranceRate) }
+            .sink { [weak speech] speed in speech?.changeSpeed(speed) }
 
         // Likewise for voice settings. @Published emits before the property updates, so use the
         // emitted values rather than reading them back from `settings`.
@@ -76,7 +76,7 @@ public final class ReadSelectionCoordinator {
             languageOverrides: settings.languageVoiceOverrides,
             autoDetect: settings.autoDetectLanguage
         )
-        speech.speak(text, voiceID: voiceID, rate: settings.speed.utteranceRate)
+        speech.speak(text, voiceID: voiceID, speed: settings.speed)
     }
 
     /// Switches the voice of the reading in progress if the new settings pick a different one.

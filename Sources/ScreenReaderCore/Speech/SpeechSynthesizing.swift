@@ -7,7 +7,7 @@ public protocol SpeechSynthesizing: AnyObject {
     var onFinish: (@MainActor () -> Void)? { get set }
     /// Called when the engine starts a word of the current utterance, with the word's UTF-16 offset.
     var onProgress: (@MainActor (Int) -> Void)? { get set }
-    func speak(_ text: String, voiceID: String?, rate: Float)
+    func speak(_ text: String, voiceID: String?, speed: SpeechSpeed)
     func stop()
     func pause()
     func resume()

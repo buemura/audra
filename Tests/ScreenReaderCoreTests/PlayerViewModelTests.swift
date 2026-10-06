@@ -40,7 +40,7 @@ final class PlayerViewModelTests: XCTestCase {
 
     func testPlayPauseWhileSpeakingPauses() async {
         let model = makeModel()
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         await model.playPause()
         XCTAssertEqual(speech.state, .paused)
         XCTAssertEqual(readSelectionCount, 0)
@@ -48,7 +48,7 @@ final class PlayerViewModelTests: XCTestCase {
 
     func testPlayPauseWhilePausedResumes() async {
         let model = makeModel()
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         speech.pause()
         await model.playPause()
         XCTAssertEqual(speech.state, .speaking)
@@ -58,7 +58,7 @@ final class PlayerViewModelTests: XCTestCase {
     func testIsPlayingOnlyWhileSpeaking() {
         let model = makeModel()
         XCTAssertFalse(model.isPlaying)
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         XCTAssertTrue(model.isPlaying)
         speech.pause()
         XCTAssertFalse(model.isPlaying)
@@ -69,7 +69,7 @@ final class PlayerViewModelTests: XCTestCase {
     func testStopStopsSpeechAndIsOnlyEnabledWhileNotIdle() {
         let model = makeModel()
         XCTAssertFalse(model.canStop)
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         XCTAssertTrue(model.canStop)
         speech.pause()
         XCTAssertTrue(model.canStop)
@@ -115,13 +115,13 @@ final class PlayerViewModelTests: XCTestCase {
 
     func testTitleCollapsesWhitespace() {
         let model = makeModel()
-        speech.speak("  Hello\n\n  brave\tworld  ", voiceID: nil, rate: 0.5)
+        speech.speak("  Hello\n\n  brave\tworld  ", voiceID: nil, speed: .normal)
         XCTAssertEqual(model.title, "Hello brave world")
     }
 
     func testTitleKeepsLastTextAfterStop() {
         let model = makeModel()
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         speech.stop()
         XCTAssertEqual(model.title, "Hello")
     }
@@ -135,21 +135,21 @@ final class PlayerViewModelTests: XCTestCase {
     func testSubtitleShowsSpeedAndInstalledVoice() {
         let model = makeModel()
         settings.speed = .oneAndHalf
-        speech.speak("Olá", voiceID: "pt.luciana", rate: 0.5)
+        speech.speak("Olá", voiceID: "pt.luciana", speed: .normal)
         XCTAssertEqual(model.subtitle, "1.5x · Luciana (pt-BR)")
     }
 
     func testSubtitleFallsBackToSystemVoiceForNilOrUnknownVoice() {
         let model = makeModel()
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         XCTAssertEqual(model.subtitle, "1x · System voice")
-        speech.speak("Hello", voiceID: "not.installed", rate: 0.5)
+        speech.speak("Hello", voiceID: "not.installed", speed: .normal)
         XCTAssertEqual(model.subtitle, "1x · System voice")
     }
 
     func testSubtitleFollowsSpeedChanges() {
         let model = makeModel()
-        speech.speak("Olá", voiceID: "pt.luciana", rate: 0.5)
+        speech.speak("Olá", voiceID: "pt.luciana", speed: .normal)
         model.faster()
         XCTAssertEqual(model.subtitle, "1.5x · Luciana (pt-BR)")
     }
@@ -159,13 +159,13 @@ final class PlayerViewModelTests: XCTestCase {
     func testShouldBeVisibleWhileSpeakingOrPausedOnly() {
         let model = makeModel()
         XCTAssertFalse(model.shouldBeVisible)
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         XCTAssertTrue(model.shouldBeVisible)
         speech.pause()
         XCTAssertTrue(model.shouldBeVisible)
         speech.stop()
         XCTAssertFalse(model.shouldBeVisible)
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         synthesizer.finish()
         XCTAssertFalse(model.shouldBeVisible)
     }
@@ -182,7 +182,7 @@ final class PlayerViewModelTests: XCTestCase {
         let model = makeModel()
         var received: [Bool] = []
         let subscription = model.$shouldBeVisible.sink { received.append($0) }
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         speech.pause()
         speech.stop()
         subscription.cancel()
@@ -195,7 +195,7 @@ final class PlayerViewModelTests: XCTestCase {
         let model = makeModel()
         var changes = 0
         let subscription = model.objectWillChange.sink { changes += 1 }
-        speech.speak("Hello", voiceID: nil, rate: 0.5)
+        speech.speak("Hello", voiceID: nil, speed: .normal)
         let afterSpeak = changes
         XCTAssertGreaterThan(afterSpeak, 0)
         settings.speed = .double
