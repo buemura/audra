@@ -12,6 +12,8 @@ final class FakeKokoroEngine: KokoroEngine {
     struct Failure: Error {}
 
     private(set) var calls: [Call] = []
+    /// Texts passed to `phonemize`, in order.
+    private(set) var phonemizedTexts: [String] = []
     /// Thrown by every call.
     var error: (any Error)?
     /// Phonemes that throw `Failure`.
@@ -29,6 +31,11 @@ final class FakeKokoroEngine: KokoroEngine {
         if unavailablePhonemes.contains(phonemes) { throw KokoroEngineError.unavailable }
         if failingPhonemes.contains(phonemes) { throw Failure() }
         return Array(repeating: 0.1, count: phonemes.unicodeScalars.count)
+    }
+
+    func phonemize(_ text: String, using phonemizer: any Phonemizer) async throws -> String {
+        phonemizedTexts.append(text)
+        return try phonemizer.phonemize(text)
     }
 
     func release() {

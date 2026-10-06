@@ -154,7 +154,7 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
 
     private func synthesize(_ text: String, voice: KokoroVoice, phonemizer: any Phonemizer, speed: Float) async throws -> [Float] {
         var samples: [Float] = []
-        for chunk in try phonemeChunks(for: text, phonemizer: phonemizer) {
+        for chunk in try await phonemeChunks(for: text, phonemizer: phonemizer) {
             try Task.checkCancellation()
             samples += try await engine.synthesize(phonemes: chunk, voiceID: voice.id, speed: speed)
         }
@@ -163,8 +163,8 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
 
     /// Phonemes for `text` in pieces of at most `maxPhonemes` scalars. Over-long text is split
     /// at clause punctuation (then words, then characters) and the pieces are merged back greedily.
-    func phonemeChunks(for text: String, phonemizer: any Phonemizer) throws -> [String] {
-        let phonemes = try phonemizer.phonemize(text)
+    func phonemeChunks(for text: String, phonemizer: any Phonemizer) async throws -> [String] {
+        let phonemes = try await engine.phonemize(text, using: phonemizer)
         guard phonemes.unicodeScalars.count > Self.maxPhonemes else {
             return phonemes.isEmpty ? [] : [phonemes]
         }
@@ -172,8 +172,12 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
         guard parts.count > 1 else {
             return [String(String.UnicodeScalarView(phonemes.unicodeScalars.prefix(Self.maxPhonemes)))]
         }
+        var pieces: [String] = []
+        for part in parts {
+            pieces += try await phonemeChunks(for: part, phonemizer: phonemizer)
+        }
         var chunks: [String] = []
-        for piece in try parts.flatMap({ try phonemeChunks(for: $0, phonemizer: phonemizer) }) {
+        for piece in pieces {
             if let last = chunks.last, last.unicodeScalars.count + 1 + piece.unicodeScalars.count <= Self.maxPhonemes {
                 chunks[chunks.count - 1] = last + " " + piece
             } else {

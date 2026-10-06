@@ -35,6 +35,10 @@ public actor MLXKokoroEngine: KokoroEngine {
         }
     }
 
+    public func phonemize(_ text: String, using phonemizer: any Phonemizer) throws -> String {
+        try phonemizer.phonemize(text)
+    }
+
     /// Frees the model's memory; it is loaded again on the next `synthesize`.
     public func unload() {
         unloadTask?.cancel()

@@ -208,6 +208,12 @@ final class KokoroSynthesizerTests: XCTestCase {
         XCTAssertEqual(engine.calls, callsBeforeFailure)
     }
 
+    func testPhonemizesEverySentenceThroughTheEngine() async {
+        makeSynthesizer()
+        await speak("One. Two. Three.")
+        XCTAssertEqual(engine.phonemizedTexts, ["One.", "Two.", "Three."])
+    }
+
     func testOverLongSentenceIsSplitUnderTheTokenLimit() async {
         makeSynthesizer()
         let sentence = Array(repeating: "palavra", count: 100).joined(separator: ", ") + "."
