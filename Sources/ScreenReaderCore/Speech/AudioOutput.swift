@@ -11,11 +11,15 @@ public protocol AudioOutput: AnyObject {
     func resume()
     /// Drops everything queued.
     func stop()
+    /// Called when playback stops on its own (e.g. the audio device changed); everything queued is dropped.
+    var onFailure: (@MainActor () -> Void)? { get set }
 }
 
-/// `AudioOutput` on `AVAudioEngine`.
+/// `AudioOutput` on `AVAudioEngine`. The engine runs only while something is queued or paused.
 @MainActor
 public final class AVAudioEngineOutput: AudioOutput {
+    public var onFailure: (@MainActor () -> Void)?
+
     private struct Entry {
         let onStart: @MainActor () -> Void
         let onEnd: @MainActor () -> Void
@@ -28,10 +32,21 @@ public final class AVAudioEngineOutput: AudioOutput {
     private var isPaused = false
     /// Bumped by `stop()` so completion handlers of dropped buffers are ignored.
     private var epoch = 0
+    nonisolated(unsafe) private var configurationObserver: (any NSObjectProtocol)?
 
     public init() {
         engine.attach(player)
         engine.connect(player, to: engine.mainMixerNode, format: format)
+        // A device or route change stops the engine; queued buffers would then never finish.
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in self?.configurationChanged() }
+        }
+    }
+
+    deinit {
+        if let configurationObserver { NotificationCenter.default.removeObserver(configurationObserver) }
     }
 
     public func schedule(_ samples: [Float], onStart: @escaping @MainActor () -> Void, onEnd: @escaping @MainActor () -> Void) throws {
@@ -64,9 +79,13 @@ public final class AVAudioEngineOutput: AudioOutput {
     }
 
     public func stop() {
+        isPaused = false
+        dropQueue()
+    }
+
+    private func dropQueue() {
         epoch += 1
         queue.removeAll()
-        isPaused = false
         player.stop()
         engine.stop()
     }
@@ -77,6 +96,22 @@ public final class AVAudioEngineOutput: AudioOutput {
         finished.onEnd()
         // onEnd may have stopped playback.
         guard epoch == self.epoch else { return }
-        queue.first?.onStart()
+        if let next = queue.first {
+            next.onStart()
+        } else {
+            // Drained: release the audio device instead of rendering silence. `schedule` restarts it.
+            dropQueue()
+        }
+    }
+
+    private func configurationChanged() {
+        guard !queue.isEmpty else {
+            // Nothing was playing; leave the engine stopped so the next `schedule` restarts it.
+            dropQueue()
+            return
+        }
+        isPaused = false
+        dropQueue()
+        onFailure?()
     }
 }

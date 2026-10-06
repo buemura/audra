@@ -50,6 +50,7 @@ final class FakeAudioOutput: AudioOutput {
 
     struct StartFailure: Error {}
 
+    var onFailure: (@MainActor () -> Void)?
     var failsToStart = false
     private(set) var queue: [Item] = []
     private(set) var scheduledCount = 0
@@ -70,6 +71,12 @@ final class FakeAudioOutput: AudioOutput {
         let finished = queue.removeFirst()
         finished.onEnd()
         queue.first?.onStart()
+    }
+
+    /// Simulates playback stopping on its own, e.g. because the audio device changed.
+    func failPlayback() {
+        queue.removeAll()
+        onFailure?()
     }
 
     func pause() { pauseCount += 1 }

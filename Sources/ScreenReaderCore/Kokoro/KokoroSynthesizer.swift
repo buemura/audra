@@ -28,6 +28,8 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
         var queued = 0
         var synthesisDone = false
         var playingOffset: Int?
+        /// Offset of the sentence being synthesized; where a hand-over starts when nothing is playing.
+        var synthesizingOffset = 0
         var slotWaiter: CheckedContinuation<Void, Never>?
 
         func freeSlot() {
@@ -44,6 +46,7 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
         self.engine = engine
         self.output = output
         self.phonemizer = phonemizer
+        output.onFailure = { [weak self] in self?.playbackFailed() }
     }
 
     public func speak(_ text: String, voiceID: String?, speed: SpeechSpeed) {
@@ -91,6 +94,7 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
                 guard self.reading === reading else { return }
             }
             guard self.reading === reading else { return }
+            reading.synthesizingOffset = sentence.offset
 
             let samples: [Float]
             do {
@@ -111,7 +115,7 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
 
             do {
                 try output.schedule(samples, onStart: { [weak self] in
-                guard let self, self.reading === reading else { return }
+                    guard let self, self.reading === reading else { return }
                     reading.playingOffset = sentence.offset
                     self.onProgress?(sentence.offset)
                 }, onEnd: { [weak self] in
@@ -133,6 +137,13 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
         guard self.reading === reading else { return }
         reading.synthesisDone = true
         finishIfDone(reading)
+    }
+
+    /// The output stopped on its own, e.g. because the audio device changed: hand the rest over.
+    private func playbackFailed() {
+        guard let reading else { return }
+        stop()
+        onEngineFailure?(reading.playingOffset ?? reading.synthesizingOffset)
     }
 
     private func finishIfDone(_ reading: Reading) {

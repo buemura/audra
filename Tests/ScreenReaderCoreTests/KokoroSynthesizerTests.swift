@@ -196,6 +196,18 @@ final class KokoroSynthesizerTests: XCTestCase {
         XCTAssertEqual(finishCount, 0)
     }
 
+    func testPlaybackFailureHandsOverFromTheSentencePlaying() async {
+        makeSynthesizer()
+        await speak("One. Two. Three.")
+        output.finishCurrent() // "Two." starts playing
+        let callsBeforeFailure = engine.calls
+        output.failPlayback()
+        await settle()
+        XCTAssertEqual(failures, [5])
+        XCTAssertEqual(finishCount, 0)
+        XCTAssertEqual(engine.calls, callsBeforeFailure)
+    }
+
     func testOverLongSentenceIsSplitUnderTheTokenLimit() async {
         makeSynthesizer()
         let sentence = Array(repeating: "palavra", count: 100).joined(separator: ", ") + "."
