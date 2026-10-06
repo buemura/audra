@@ -9,9 +9,13 @@ includes eSpeak NG. It also includes or downloads the following:
 | KokoroSwift (vendored and patched in `Packages/KokoroSwift`) | MIT | https://github.com/mlalma/kokoro-ios (4d6d1d8) |
 | MisakiSwift | MIT | https://github.com/mlalma/MisakiSwift |
 | MLX Swift | MIT | https://github.com/ml-explore/mlx-swift |
+| swift-numerics (linked via MLX Swift) | Apache-2.0 | https://github.com/apple/swift-numerics |
 | MLXUtilsLibrary | MIT | https://github.com/mlalma/MLXUtilsLibrary |
+| ZIPFoundation (linked via MLXUtilsLibrary) | MIT | https://github.com/weichsel/ZIPFoundation |
 | KeyboardShortcuts | MIT | https://github.com/sindresorhus/KeyboardShortcuts |
 | Kokoro-82M v1.0 model weights and voices (downloaded at runtime) | Apache-2.0 | https://huggingface.co/hexgrad/Kokoro-82M |
 | misaki G2P tables and rules, ported in `Sources/ScreenReaderCore/Phonemes` | Apache-2.0 | https://github.com/hexgrad/misaki |
 | cutlet kana table (via misaki) | MIT | https://github.com/polm/cutlet |
 | pinyin-to-ipa transcription rules (via misaki) | MIT | https://github.com/stefantaubert/pinyin-to-ipa |
+
+MLX Swift also bundles third-party components (e.g. metal-cpp, fmt, nlohmann/json); see its repository for their licenses.
