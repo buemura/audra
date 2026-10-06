@@ -52,4 +52,8 @@ final class JapanesePhonemizerTests: XCTestCase {
             .text("今日は"), .number("2026", counter: "年"), .text("と"), .number("3.5", counter: nil), .text("キロ"),
         ])
     }
+
+    func testQuotes() throws {
+        XCTAssertEqual(try phonemizer.phonemize("彼は「ちょっと待って」と言った。"), "kaɾe βa \u{201C}ʨoʔto maʔte\u{201D} to iʔta.")
+    }
 }

@@ -20,4 +20,8 @@ final class ChinesePhonemizerTests: XCTestCase {
         XCTAssertEqual(ChinesePhonemizer.replacingNumbers(in: "2026年"), "二零二六年")
         XCTAssertEqual(ChinesePhonemizer.replacingNumbers(in: "15年"), "十五年")
     }
+
+    func testQuotes() throws {
+        XCTAssertEqual(try phonemizer.phonemize("我读了《红楼梦》。"), "wo↓ tu↗ lɤ \u{201C}xʊ↗ŋlou↗mə↘ŋ\u{201D}.")
+    }
 }

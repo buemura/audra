@@ -57,9 +57,9 @@ public struct JapanesePhonemizer: Phonemizer {
 
     private static let punctuationMap: [Character: String] = [
         "。": ".", "、": ",", "，": ",", "？": "?", "?": "?", "！": "!", "!": "!", "：": ":", ":": ":",
-        "；": ";", ";": ";", ".": ".", ",": ",", "「": "\u{201D}", "」": "\u{201D}", "『": "\u{201D}", "』": "\u{201D}",
+        "；": ";", ";": ";", ".": ".", ",": ",", "「": "\u{201C}", "」": "\u{201D}", "『": "\u{201C}", "』": "\u{201D}",
         "（": "(", "）": ")", "(": "(", ")": ")", "《": "(", "》": ")", "【": "[", "】": "]",
-        "«": "\u{201D}", "»": "\u{201D}", "～": "—", "〜": "—", "—": "—", "…": "…",
+        "«": "\u{201C}", "»": "\u{201D}", "～": "—", "〜": "—", "—": "—", "…": "…",
     ]
 
     /// Particles whose pronunciation differs from their spelling.
@@ -177,6 +177,6 @@ public struct JapanesePhonemizer: Phonemizer {
     static func mergeSokuonSpaces(_ phonemes: String) -> String {
         phonemes
             .replacingOccurrences(of: "(?<![!\",.:;?»—…\u{201D}]) (?=ʔ)", with: "", options: .regularExpression)
-            .replacingOccurrences(of: "(?<=ʔ) (?![\"«\u{201D}])", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "(?<=ʔ) (?![\"«\u{201C}])", with: "", options: .regularExpression)
     }
 }
