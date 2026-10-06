@@ -12,6 +12,9 @@ public actor MLXKokoroEngine: KokoroEngine {
     private var tts: KokoroTTS?
     private var voices: [String: MLXArray] = [:]
     private var unloadTask: Task<Void, Never>?
+    private var unloadGeneration = 0
+
+    var isLoaded: Bool { tts != nil }
 
     public init(modelURL: URL, voicesURL: URL, idleTimeout: Duration = .seconds(600)) {
         self.modelURL = modelURL
@@ -21,6 +24,7 @@ public actor MLXKokoroEngine: KokoroEngine {
 
     public func synthesize(phonemes: String, voiceID: String, speed: Float) async throws -> [Float] {
         unloadTask?.cancel()
+        unloadGeneration += 1
         defer { scheduleUnload() }
         let tts = try loadedModel()
         guard let voice = voices[voiceID + ".npy"] else { throw KokoroEngineError.unavailable }
@@ -45,6 +49,8 @@ public actor MLXKokoroEngine: KokoroEngine {
         guard fileManager.fileExists(atPath: modelURL.path), fileManager.fileExists(atPath: voicesURL.path) else {
             throw KokoroEngineError.unavailable
         }
+        // KokoroTTS's initializer traps on bad files, so validate the weights with the throwing loader first.
+        do { _ = try MLX.loadArrays(url: modelURL) } catch { throw KokoroEngineError.unavailable }
         let loadedVoices = NpyzReader.read(fileFromPath: voicesURL) ?? [:]
         guard !loadedVoices.isEmpty else { throw KokoroEngineError.unavailable }
         let tts = KokoroTTS(modelPath: modelURL)
@@ -54,10 +60,17 @@ public actor MLXKokoroEngine: KokoroEngine {
     }
 
     private func scheduleUnload() {
-        unloadTask = Task { [idleTimeout] in
+        unloadGeneration += 1
+        let generation = unloadGeneration
+        unloadTask = Task { [weak self, idleTimeout] in
             try? await Task.sleep(for: idleTimeout)
             guard !Task.isCancelled else { return }
-            self.unload()
+            await self?.unloadIfIdle(generation: generation)
         }
+    }
+
+    private func unloadIfIdle(generation: Int) {
+        guard generation == unloadGeneration else { return }
+        unload()
     }
 }
