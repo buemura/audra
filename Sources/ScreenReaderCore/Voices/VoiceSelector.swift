@@ -4,7 +4,7 @@ public enum VoiceSelector {
     /// Picks the voice for a piece of text. Order of preference:
     /// 1. the user's override for the detected language,
     /// 2. the default voice, if it speaks the detected language,
-    /// 3. the best-quality installed voice for the detected language (ties: name A–Z),
+    /// 3. the best-quality installed voice for the detected language (ties: sortOrder, then name A–Z),
     /// 4. the default voice.
     /// Returns nil to let the system use its own default voice.
     public static func selectVoice(
@@ -28,7 +28,9 @@ public enum VoiceSelector {
         let best = availableVoices
             .filter { $0.languageCode == code }
             .max { lhs, rhs in
-                lhs.quality != rhs.quality ? lhs.quality < rhs.quality : lhs.name > rhs.name
+                if lhs.quality != rhs.quality { return lhs.quality < rhs.quality }
+                if lhs.sortOrder != rhs.sortOrder { return lhs.sortOrder > rhs.sortOrder }
+                return lhs.name > rhs.name
             }
         return best?.id ?? defaultVoice?.id
     }

@@ -6,6 +6,8 @@ public struct VoiceInfo: Identifiable, Hashable {
         case standard = 1
         case enhanced = 2
         case premium = 3
+        /// Kokoro neural voice.
+        case natural = 4
 
         public static func < (lhs: Quality, rhs: Quality) -> Bool { lhs.rawValue < rhs.rawValue }
     }
@@ -16,12 +18,16 @@ public struct VoiceInfo: Identifiable, Hashable {
     /// BCP-47 tag, e.g. "en-US".
     public let language: String
     public let quality: Quality
+    /// Preference among voices of the same quality; lower wins. System voices are all 0;
+    /// Kokoro voices use their catalog position.
+    public let sortOrder: Int
 
-    public init(id: String, name: String, language: String, quality: Quality) {
+    public init(id: String, name: String, language: String, quality: Quality, sortOrder: Int = 0) {
         self.id = id
         self.name = name
         self.language = language
         self.quality = quality
+        self.sortOrder = sortOrder
     }
 
     /// Primary language subtag, e.g. "en" for "en-US".
@@ -40,6 +46,7 @@ extension VoiceInfo {
         case .standard: return "\(name) (\(language))"
         case .enhanced: return "\(name) (\(language), Enhanced)"
         case .premium: return "\(name) (\(language), Premium)"
+        case .natural: return "\(name) (\(language), Natural)"
         }
     }
 }

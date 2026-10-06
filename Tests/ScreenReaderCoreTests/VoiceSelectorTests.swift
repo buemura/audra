@@ -72,4 +72,47 @@ final class VoiceSelectorTests: XCTestCase {
     func testNoVoiceForLanguageAndNoDefaultLetsSystemChoose() {
         XCTAssertNil(select("fr"))
     }
+
+    private let kokoroAlpha = VoiceInfo(id: "kokoro.jf_alpha", name: "Alpha", language: "ja-JP", quality: .natural, sortOrder: 40)
+    private let kokoroHeart = VoiceInfo(id: "kokoro.af_heart", name: "Heart", language: "en-US", quality: .natural, sortOrder: 0)
+    private let kokoroBella = VoiceInfo(id: "kokoro.af_bella", name: "Bella", language: "en-US", quality: .natural, sortOrder: 1)
+
+    private func selectWithNatural(
+        _ language: String?,
+        default defaultVoiceID: String? = nil,
+        overrides: [String: String] = [:],
+        voices: [VoiceInfo]
+    ) -> String? {
+        VoiceSelector.selectVoice(
+            detectedLanguage: language,
+            defaultVoiceID: defaultVoiceID,
+            languageOverrides: overrides,
+            availableVoices: voices
+        )
+    }
+
+    func testNaturalVoiceOutranksPremium() {
+        XCTAssertEqual(selectWithNatural("ja", voices: [kyoko, kokoroAlpha]), "kokoro.jf_alpha")
+    }
+
+    func testEqualQualityPrefersLowerSortOrderOverName() {
+        // "Bella" sorts before "Heart" by name, but Heart is first in catalog order.
+        XCTAssertEqual(selectWithNatural("en", voices: [samantha, kokoroBella, kokoroHeart]), "kokoro.af_heart")
+    }
+
+    func testDefaultSystemVoiceInDetectedLanguageStillBeatsNaturalVoice() {
+        XCTAssertEqual(selectWithNatural("ja", default: "ja.kyoko", voices: [kyoko, kokoroAlpha]), "ja.kyoko")
+    }
+
+    func testOverrideToUnavailableNaturalVoiceFallsThrough() {
+        XCTAssertEqual(selectWithNatural("ja", overrides: ["ja": "kokoro.jf_alpha"], voices: [kyoko]), "ja.kyoko")
+    }
+
+    func testNaturalMenuLabel() {
+        XCTAssertEqual(kokoroAlpha.menuLabel, "Alpha (ja-JP, Natural)")
+    }
+
+    func testSortOrderDefaultsToZero() {
+        XCTAssertEqual(samantha.sortOrder, 0)
+    }
 }
