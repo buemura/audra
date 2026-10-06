@@ -5,6 +5,8 @@ final class FakeModelDownloader: ModelDownloading, @unchecked Sendable {
     var files: [URL: Data] = [:]
     var error: (any Error)?
     var holds = false
+    /// Progress fractions reported by each download.
+    var progressSteps: [Double] = [0.5]
     private(set) var requested: [URL] = []
     private(set) var cancelledCount = 0
 
@@ -40,7 +42,7 @@ final class FakeModelDownloader: ModelDownloading, @unchecked Sendable {
             throw CancellationError()
         }
 
-        progress(0.5)
+        progressSteps.forEach(progress)
         let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try data.write(to: file)
         return file

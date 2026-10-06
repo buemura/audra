@@ -141,4 +141,18 @@ final class KokoroModelStoreTests: XCTestCase {
         }
         XCTAssertTrue(downloadingStates.contains { $0 > 0 && $0 < 1 })
     }
+
+    func testPublishesProgressOnlyWhenTheWholePercentChanges() async throws {
+        let store = makeStore()
+        downloader.progressSteps = [0.5, 0.5001, 0.5002, 0.9]
+        var percents: [Int] = []
+        let cancellable = store.$state.sink { state in
+            if case let .downloading(progress) = state { percents.append(Int(progress * 100)) }
+        }
+        addTeardownBlock { _ = cancellable }
+        store.start()
+        try await waitUntil { store.state == .ready }
+        XCTAssertGreaterThan(percents.count, 1)
+        XCTAssertFalse(zip(percents, percents.dropFirst()).contains { $0 == $1 }, "\(percents)")
+    }
 }

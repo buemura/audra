@@ -123,8 +123,11 @@ public final class KokoroModelStore: ObservableObject {
                 let done = Double(completed)
                 let temporary = try await downloader.download(asset.url) { fraction in
                     Task { @MainActor [weak self] in
-                        guard let self, self.runID == id, case .downloading = self.state else { return }
-                        self.state = .downloading(progress: (done + fraction * Double(asset.byteCount)) / total)
+                        guard let self, self.runID == id, case let .downloading(current) = self.state else { return }
+                        let progress = (done + fraction * Double(asset.byteCount)) / total
+                        // Publish only whole-percent changes; the downloader reports far more often.
+                        guard Int(progress * 100) != Int(current * 100) else { return }
+                        self.state = .downloading(progress: progress)
                     }
                 }
                 defer { try? FileManager.default.removeItem(at: temporary) }
