@@ -100,6 +100,8 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
                 stop()
                 onEngineFailure?(reading.playingOffset ?? sentence.offset)
                 return
+            } catch is CancellationError {
+                return
             } catch {
                 logger.error("Skipped a sentence: \(String(describing: type(of: error)), privacy: .public)")
                 continue
@@ -107,17 +109,26 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
             guard self.reading === reading else { return }
             guard !samples.isEmpty else { continue }
 
-            reading.queued += 1
-            output.schedule(samples, onStart: { [weak self] in
+            do {
+                try output.schedule(samples, onStart: { [weak self] in
                 guard let self, self.reading === reading else { return }
-                reading.playingOffset = sentence.offset
-                self.onProgress?(sentence.offset)
-            }, onEnd: { [weak self] in
-                guard let self, self.reading === reading else { return }
-                reading.queued -= 1
-                reading.freeSlot()
-                self.finishIfDone(reading)
-            })
+                    reading.playingOffset = sentence.offset
+                    self.onProgress?(sentence.offset)
+                }, onEnd: { [weak self] in
+                    guard let self, self.reading === reading else { return }
+                    reading.queued -= 1
+                    if reading.queued == 0 { reading.playingOffset = nil }
+                    reading.freeSlot()
+                    self.finishIfDone(reading)
+                })
+                reading.queued += 1
+            } catch {
+                logger.error("Audio output failed: \(String(describing: type(of: error)), privacy: .public)")
+                guard self.reading === reading else { return }
+                stop()
+                onEngineFailure?(reading.playingOffset ?? sentence.offset)
+                return
+            }
         }
         guard self.reading === reading else { return }
         reading.synthesisDone = true
@@ -133,6 +144,7 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
     private func synthesize(_ text: String, voice: KokoroVoice, phonemizer: any Phonemizer, speed: Float) async throws -> [Float] {
         var samples: [Float] = []
         for chunk in try phonemeChunks(for: text, phonemizer: phonemizer) {
+            try Task.checkCancellation()
             samples += try await engine.synthesize(phonemes: chunk, voiceID: voice.id, speed: speed)
         }
         return samples

@@ -48,13 +48,17 @@ final class FakeAudioOutput: AudioOutput {
         let onEnd: @MainActor () -> Void
     }
 
+    struct StartFailure: Error {}
+
+    var failsToStart = false
     private(set) var queue: [Item] = []
     private(set) var scheduledCount = 0
     private(set) var pauseCount = 0
     private(set) var resumeCount = 0
     private(set) var stopCount = 0
 
-    func schedule(_ samples: [Float], onStart: @escaping @MainActor () -> Void, onEnd: @escaping @MainActor () -> Void) {
+    func schedule(_ samples: [Float], onStart: @escaping @MainActor () -> Void, onEnd: @escaping @MainActor () -> Void) throws {
+        if failsToStart { throw StartFailure() }
         queue.append(Item(samples: samples, onStart: onStart, onEnd: onEnd))
         scheduledCount += 1
         if queue.count == 1 { onStart() }

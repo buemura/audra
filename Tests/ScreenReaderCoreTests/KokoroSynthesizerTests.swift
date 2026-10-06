@@ -170,6 +170,32 @@ final class KokoroSynthesizerTests: XCTestCase {
         XCTAssertEqual(output.resumeCount, 1)
     }
 
+    func testOutputFailingToStartHandsOverToTheSystemVoice() async {
+        makeSynthesizer()
+        output.failsToStart = true
+        await speak("One. Two.")
+        XCTAssertEqual(failures, [0])
+        XCTAssertEqual(finishCount, 0)
+        XCTAssertEqual(output.scheduledCount, 0)
+    }
+
+    func testHandOverAfterTheQueueDrainedStartsAtTheFailingSentence() async {
+        makeSynthesizer()
+        engine.unavailablePhonemes = ["Two."]
+        engine.holdsCalls = true
+        await speak("One. Two.")
+        engine.release()
+        engine.holdsCalls = true // hold the "Two." call
+        await settle()
+        XCTAssertEqual(output.queue.count, 1)
+        output.finishCurrent() // queue drained
+        XCTAssertTrue(output.queue.isEmpty)
+        engine.release()
+        await settle()
+        XCTAssertEqual(failures, [5])
+        XCTAssertEqual(finishCount, 0)
+    }
+
     func testOverLongSentenceIsSplitUnderTheTokenLimit() async {
         makeSynthesizer()
         let sentence = Array(repeating: "palavra", count: 100).joined(separator: ", ") + "."

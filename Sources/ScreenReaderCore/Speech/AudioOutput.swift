@@ -5,7 +5,8 @@ import AVFoundation
 public protocol AudioOutput: AnyObject {
     /// Queues 24 kHz mono samples after everything already queued. `onStart` runs when this buffer
     /// starts playing, `onEnd` when it has played completely. Neither runs after `stop()`.
-    func schedule(_ samples: [Float], onStart: @escaping @MainActor () -> Void, onEnd: @escaping @MainActor () -> Void)
+    /// Throws if audio output can't start; nothing is queued then.
+    func schedule(_ samples: [Float], onStart: @escaping @MainActor () -> Void, onEnd: @escaping @MainActor () -> Void) throws
     func pause()
     func resume()
     /// Drops everything queued.
@@ -33,7 +34,7 @@ public final class AVAudioEngineOutput: AudioOutput {
         engine.connect(player, to: engine.mainMixerNode, format: format)
     }
 
-    public func schedule(_ samples: [Float], onStart: @escaping @MainActor () -> Void, onEnd: @escaping @MainActor () -> Void) {
+    public func schedule(_ samples: [Float], onStart: @escaping @MainActor () -> Void, onEnd: @escaping @MainActor () -> Void) throws {
         guard !samples.isEmpty,
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count))
         else { return }
@@ -41,7 +42,7 @@ public final class AVAudioEngineOutput: AudioOutput {
         samples.withUnsafeBufferPointer { source in
             buffer.floatChannelData![0].update(from: source.baseAddress!, count: samples.count)
         }
-        if !engine.isRunning { try? engine.start() }
+        if !engine.isRunning { try engine.start() }
 
         queue.append(Entry(onStart: onStart, onEnd: onEnd))
         let epoch = self.epoch
@@ -59,7 +60,7 @@ public final class AVAudioEngineOutput: AudioOutput {
 
     public func resume() {
         isPaused = false
-        player.play()
+        if engine.isRunning && !queue.isEmpty { player.play() }
     }
 
     public func stop() {
