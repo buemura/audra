@@ -1,3 +1,4 @@
+import MLX
 import ScreenReaderCore
 import XCTest
 @testable import ScreenReaderKokoro
@@ -50,6 +51,8 @@ final class MLXKokoroEngineTests: XCTestCase {
         try await Task.sleep(for: .seconds(1))
         let loadedAfterIdle = await engine.isLoaded
         XCTAssertFalse(loadedAfterIdle)
+        // The freed buffers go back to the system, not into MLX's buffer cache.
+        XCTAssertLessThan(Memory.cacheMemory, 1_000_000)
 
         _ = try await engine.synthesize(phonemes: "həlˈO", voiceID: "af_heart", speed: 1)
         let loadedAgain = await engine.isLoaded

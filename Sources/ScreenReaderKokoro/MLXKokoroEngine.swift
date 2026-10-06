@@ -45,6 +45,8 @@ public actor MLXKokoroEngine: KokoroEngine {
         unloadTask = nil
         tts = nil
         voices = [:]
+        // Released arrays only return to MLX's buffer cache; give that memory back to the system.
+        Memory.clearCache()
     }
 
     private func loadedModel() throws -> KokoroTTS {
@@ -55,6 +57,8 @@ public actor MLXKokoroEngine: KokoroEngine {
         }
         // KokoroTTS's initializer traps on bad files, so validate the weights with the throwing loader first.
         do { _ = try MLX.loadArrays(url: modelURL) } catch { throw KokoroEngineError.unavailable }
+        // The validated copy is discarded; don't keep its buffers cached next to the real model.
+        Memory.clearCache()
         let loadedVoices = NpyzReader.read(fileFromPath: voicesURL) ?? [:]
         guard !loadedVoices.isEmpty else { throw KokoroEngineError.unavailable }
         let tts = KokoroTTS(modelPath: modelURL)
