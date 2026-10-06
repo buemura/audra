@@ -27,3 +27,11 @@ class FakeSynthesizer: SpeechSynthesizing {
     /// Simulates the engine starting the word at `offset` (UTF-16) of the current utterance.
     func progress(to offset: Int) { onProgress?(offset) }
 }
+
+@MainActor
+final class FakeFallibleSynthesizer: FakeSynthesizer, FallibleSpeechSynthesizing {
+    var onEngineFailure: (@MainActor (Int) -> Void)?
+
+    /// Simulates the engine giving up; speech should continue from `offset`.
+    func failEngine(at offset: Int) { onEngineFailure?(offset) }
+}
