@@ -6,7 +6,7 @@ BUNDLE_ID := com.buemura.ScreenReader
 ## Build, reset the Accessibility grant and open the app
 run: build reset-accessibility open
 
-## Build "build/Screen Reader.app" (universal, ad-hoc signed)
+## Build "build/Screen Reader.app" (Apple Silicon, ad-hoc signed)
 build:
 	./scripts/build-app.sh
 
@@ -19,8 +19,12 @@ open:
 	-pkill -x ScreenReader
 	open "$(APP)"
 
+## Run all tests with xcodebuild (MLX needs the Metal toolchain). ONLY=Target/TestClass runs a subset.
+## The bundle path lets package resources (Misaki dictionaries, Kokoro config) load outside an app.
 test:
-	swift test
+	TEST_RUNNER_PACKAGE_RESOURCE_BUNDLE_PATH="$(CURDIR)/build/DerivedData/Build/Products/Debug" \
+	xcodebuild test -scheme ScreenReader-Package -destination 'platform=macOS,arch=arm64' \
+		-derivedDataPath build/DerivedData -quiet $(if $(ONLY),-only-testing:$(ONLY))
 
 dmg:
 	./scripts/make-dmg.sh
