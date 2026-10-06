@@ -12,3 +12,11 @@ public protocol SpeechSynthesizing: AnyObject {
     func pause()
     func resume()
 }
+
+/// A synthesizer that can find out mid-reading that it can't go on, e.g. the Kokoro model is missing.
+@MainActor
+public protocol FallibleSpeechSynthesizing: SpeechSynthesizing {
+    /// Called instead of `onFinish` when the engine can't speak the rest of the text. The argument
+    /// is the UTF-16 offset in the text passed to `speak` from which another engine should continue.
+    var onEngineFailure: (@MainActor (Int) -> Void)? { get set }
+}
