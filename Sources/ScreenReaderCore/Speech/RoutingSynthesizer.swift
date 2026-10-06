@@ -15,6 +15,8 @@ public final class RoutingSynthesizer: SpeechSynthesizing {
     private var speed: SpeechSpeed = .normal
     /// Where the active engine's text starts within `text` (non-zero after a fallback).
     private var progressBase = 0
+    /// So a fallback that starts while paused stays paused.
+    private var isPaused = false
 
     public init(
         system: any SpeechSynthesizing,
@@ -38,6 +40,7 @@ public final class RoutingSynthesizer: SpeechSynthesizing {
         self.text = text
         self.speed = speed
         progressBase = 0
+        isPaused = false
         let engine: any SpeechSynthesizing = KokoroVoiceCatalog.isKokoroVoiceID(voiceID) ? kokoro : system
         active = engine
         engine.speak(text, voiceID: voiceID, speed: speed)
@@ -46,11 +49,19 @@ public final class RoutingSynthesizer: SpeechSynthesizing {
     public func stop() {
         let previous = active
         active = nil
+        isPaused = false
         previous?.stop()
     }
 
-    public func pause() { active?.pause() }
-    public func resume() { active?.resume() }
+    public func pause() {
+        isPaused = true
+        active?.pause()
+    }
+
+    public func resume() {
+        isPaused = false
+        active?.resume()
+    }
 
     private func isActive(_ engine: (any SpeechSynthesizing)?) -> Bool {
         guard let engine, let active else { return false }
@@ -81,5 +92,6 @@ public final class RoutingSynthesizer: SpeechSynthesizing {
         progressBase = start
         active = system
         system.speak(remaining, voiceID: fallbackVoiceID(remaining), speed: speed)
+        if isPaused { system.pause() }
     }
 }

@@ -77,6 +77,14 @@ final class RoutingSynthesizerTests: XCTestCase {
         XCTAssertEqual(finishCount, 1)
     }
 
+    func testEngineFailureWhilePausedContinuesPaused() {
+        makeRouting()
+        routing.speak("Hello brave world", voiceID: "kokoro.af_heart", speed: .normal)
+        routing.pause()
+        kokoro.failEngine(at: 6)
+        XCTAssertEqual(system.calls, [.speak(text: "brave world", voiceID: "fallback.voice", speed: .normal), .pause])
+    }
+
     func testFailureFromAnInactiveEngineIsIgnored() {
         makeRouting()
         routing.speak("Hi", voiceID: "en.samantha", speed: .normal)
