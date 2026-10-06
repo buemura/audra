@@ -83,4 +83,12 @@ final class RoutingSynthesizerTests: XCTestCase {
         kokoro.failEngine(at: 0)
         XCTAssertEqual(system.calls.count, 1)
     }
+
+    func testEngineFailureAtTheEndFinishesInsteadOfSpeaking() {
+        makeRouting()
+        routing.speak("Hi", voiceID: "kokoro.af_heart", speed: .normal)
+        kokoro.failEngine(at: 2)
+        XCTAssertEqual(system.calls, [])
+        XCTAssertEqual(finishCount, 1)
+    }
 }

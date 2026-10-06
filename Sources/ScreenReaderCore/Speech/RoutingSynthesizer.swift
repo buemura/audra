@@ -32,7 +32,9 @@ public final class RoutingSynthesizer: SpeechSynthesizing {
     }
 
     public func speak(_ text: String, voiceID: String?, speed: SpeechSpeed) {
-        active?.stop()
+        let previous = active
+        active = nil
+        previous?.stop()
         self.text = text
         self.speed = speed
         progressBase = 0
@@ -42,8 +44,9 @@ public final class RoutingSynthesizer: SpeechSynthesizing {
     }
 
     public func stop() {
-        active?.stop()
+        let previous = active
         active = nil
+        previous?.stop()
     }
 
     public func pause() { active?.pause() }
@@ -69,6 +72,11 @@ public final class RoutingSynthesizer: SpeechSynthesizing {
         guard isActive(engine) else { return }
         let length = (text as NSString).length
         let start = min(progressBase + offset, length)
+        guard start < length else {
+            active = nil
+            onFinish?()
+            return
+        }
         let remaining = (text as NSString).substring(from: start)
         progressBase = start
         active = system

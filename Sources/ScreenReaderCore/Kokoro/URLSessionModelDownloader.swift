@@ -12,6 +12,7 @@ public final class URLSessionModelDownloader: NSObject, ModelDownloading, URLSes
     private let lock = NSLock()
     private var pending: [Int: Pending] = [:]
     private var resumeData: [URL: Data] = [:]
+    private var tasks: [URL: URLSessionDownloadTask] = [:]
     private lazy var session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
 
     public override init() {
@@ -19,20 +20,33 @@ public final class URLSessionModelDownloader: NSObject, ModelDownloading, URLSes
     }
 
     public func download(_ url: URL, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
-        try await withCheckedThrowingContinuation { continuation in
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                lock.lock()
+                let task = resumeData.removeValue(forKey: url).map { session.downloadTask(withResumeData: $0) }
+                    ?? session.downloadTask(with: url)
+                pending[task.taskIdentifier] = Pending(url: url, continuation: continuation, progress: progress)
+                tasks[url] = task
+                lock.unlock()
+                task.resume()
+            }
+        } onCancel: {
+            // Note: onCancel can run before the task is registered in tasks[url] if withTaskCancellationHandler runs at the wrong moment, but this is acceptable.
             lock.lock()
-            let task = resumeData.removeValue(forKey: url).map { session.downloadTask(withResumeData: $0) }
-                ?? session.downloadTask(with: url)
-            pending[task.taskIdentifier] = Pending(url: url, continuation: continuation, progress: progress)
+            let task = tasks[url]
             lock.unlock()
-            task.resume()
+            task?.cancel()
         }
     }
 
     private func takePending(_ task: URLSessionTask) -> Pending? {
         lock.lock()
         defer { lock.unlock() }
-        return pending.removeValue(forKey: task.taskIdentifier)
+        if let p = pending.removeValue(forKey: task.taskIdentifier) {
+            tasks[p.url] = nil
+            return p
+        }
+        return nil
     }
 
     public func urlSession(

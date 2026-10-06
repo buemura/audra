@@ -60,6 +60,7 @@ public final class KokoroModelStore: ObservableObject {
     private let assets: [Asset]
     private let downloader: any ModelDownloading
     private var downloadTask: Task<Void, Never>?
+    private var runID = 0
 
     public init(directory: URL, assets: [Asset], downloader: any ModelDownloading) {
         self.directory = directory
@@ -88,22 +89,27 @@ public final class KokoroModelStore: ObservableObject {
     /// Downloads whatever is missing. Also used to retry after a failure.
     public func download() {
         guard downloadTask == nil, state != .ready else { return }
+        runID += 1
+        let id = runID
         state = .downloading(progress: 0)
         downloadTask = Task { [weak self] in
-            await self?.performDownload()
-            self?.downloadTask = nil
+            await self?.performDownload(runID: id)
+            if let self, self.runID == id {
+                self.downloadTask = nil
+            }
         }
     }
 
     /// Deletes the files. They are downloaded again on the next launch, or with `download()`.
     public func remove() {
+        runID += 1
         downloadTask?.cancel()
         downloadTask = nil
         try? FileManager.default.removeItem(at: directory)
         state = .notDownloaded
     }
 
-    private func performDownload() async {
+    private func performDownload(runID id: Int) async {
         let total = Double(max(totalBytes, 1))
         var completed: Int64 = 0
         do {
@@ -117,24 +123,25 @@ public final class KokoroModelStore: ObservableObject {
                 let done = Double(completed)
                 let temporary = try await downloader.download(asset.url) { fraction in
                     Task { @MainActor [weak self] in
-                        guard let self, case .downloading = self.state else { return }
+                        guard let self, self.runID == id, case .downloading = self.state else { return }
                         self.state = .downloading(progress: (done + fraction * Double(asset.byteCount)) / total)
                     }
                 }
+                defer { try? FileManager.default.removeItem(at: temporary) }
                 try Task.checkCancellation()
                 guard try await Self.sha256(of: temporary) == asset.sha256 else {
-                    try? FileManager.default.removeItem(at: temporary)
                     throw Failure.checksumMismatch(asset.fileName)
                 }
+                try Task.checkCancellation()
                 try? FileManager.default.removeItem(at: destination)
                 try FileManager.default.moveItem(at: temporary, to: destination)
                 completed += asset.byteCount
             }
             try Task.checkCancellation()
+            guard id == runID else { return }
             state = .ready
         } catch {
-            // After remove(), the cancelled download must not overwrite the state.
-            guard !Task.isCancelled else { return }
+            guard id == runID, !Task.isCancelled else { return }
             state = .failed(error.localizedDescription)
         }
     }

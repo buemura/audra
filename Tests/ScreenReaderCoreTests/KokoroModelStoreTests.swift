@@ -1,3 +1,4 @@
+import Combine
 import CryptoKit
 import XCTest
 @testable import ScreenReaderCore
@@ -100,5 +101,44 @@ final class KokoroModelStoreTests: XCTestCase {
             $0.url.absoluteString.hasPrefix("https://github.com/buemura/screen-reader-models/releases/download/kokoro-model-v1/")
                 && $0.sha256.count == 64
         })
+    }
+
+    func testRemoveDuringDownloadCancelsItAndKeepsNoFiles() async throws {
+        let store = makeStore()
+        downloader.holds = true
+        store.start()
+        try await waitUntil { downloader.requested.count == 1 }
+        store.remove()
+        try await waitUntil { downloader.cancelledCount == 1 }
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertEqual(store.state, .notDownloaded)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.path))
+    }
+
+    func testDownloadAfterRemoveCompletesAndOnlyOneRunIsActive() async throws {
+        let store = makeStore()
+        downloader.holds = true
+        store.start()
+        try await waitUntil { downloader.requested.count == 1 }
+        store.remove()
+        downloader.holds = false
+        store.download()
+        store.download()
+        try await waitUntil { store.state == .ready }
+        XCTAssertEqual(downloader.requested.count, 3)
+    }
+
+    func testReportsDownloadProgress() async throws {
+        let store = makeStore()
+        var states: [KokoroModelStore.State] = []
+        let cancellable = store.$state.sink { states.append($0) }
+        addTeardownBlock { _ = cancellable }
+        store.start()
+        try await waitUntil { store.state == .ready }
+        let downloadingStates = states.compactMap { state -> Double? in
+            if case let .downloading(progress) = state { return progress }
+            return nil
+        }
+        XCTAssertTrue(downloadingStates.contains { $0 > 0 && $0 < 1 })
     }
 }
