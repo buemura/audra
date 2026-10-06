@@ -15,7 +15,7 @@ public protocol AudioOutput: AnyObject {
     var onFailure: (@MainActor () -> Void)? { get set }
 }
 
-/// `AudioOutput` on `AVAudioEngine`. The engine runs only while something is queued or paused.
+/// `AudioOutput` on `AVAudioEngine`. The engine runs only while audio is queued.
 @MainActor
 public final class AVAudioEngineOutput: AudioOutput {
     public var onFailure: (@MainActor () -> Void)?
@@ -30,7 +30,7 @@ public final class AVAudioEngineOutput: AudioOutput {
     private let format = AVAudioFormat(standardFormatWithSampleRate: 24_000, channels: 1)!
     private var queue: [Entry] = []
     private var isPaused = false
-    /// Bumped by `stop()` so completion handlers of dropped buffers are ignored.
+    /// Bumped whenever the queue is dropped so completion handlers of dropped buffers are ignored.
     private var epoch = 0
     nonisolated(unsafe) private var configurationObserver: (any NSObjectProtocol)?
 
