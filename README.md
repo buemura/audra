@@ -19,6 +19,10 @@
 
 Audra is a small, free menu bar app for macOS. It reads aloud the text you select in Safari, Mail, Pages, PDFs, Slack, VS Code or any other app where you can highlight text. It doesn't store or send what it reads: speech is generated on your Mac.
 
+<p align="center">
+  <img src="docs/media/demo.gif" width="880" alt="Audra reading a selected paragraph in Chrome, with its floating player in the corner">
+</p>
+
 ## Features
 
 - **Works in any app.** If you can select the text, Audra can read it.
