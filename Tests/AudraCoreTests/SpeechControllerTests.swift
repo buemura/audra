@@ -226,4 +226,45 @@ final class SpeechControllerTests: XCTestCase {
         controller.changeSpeed(.normal)
         XCTAssertEqual(synthesizer.calls, [.speak(text: "Hello", voiceID: "v1", speed: .normal)])
     }
+
+    // MARK: Progress
+
+    func testProgressStartsAtZero() {
+        makeController()
+        XCTAssertEqual(controller.progress, 0)
+        controller.speak("Hello world", voiceID: nil, speed: .normal)
+        XCTAssertEqual(controller.progress, 0)
+    }
+
+    func testProgressFollowsReportedOffset() {
+        makeController()
+        controller.speak("Hello brave new world", voiceID: nil, speed: .normal) // 21 UTF-16 units
+        synthesizer.progress(to: 6)
+        XCTAssertEqual(controller.progress, 6.0 / 21, accuracy: 0.0001)
+    }
+
+    func testProgressCountsTextSkippedByRestarts() {
+        makeController()
+        controller.speak("Hello brave new world", voiceID: nil, speed: .normal)
+        synthesizer.progress(to: 6)
+        controller.changeSpeed(.double) // now speaking "brave new world"
+        XCTAssertEqual(controller.progress, 6.0 / 21, accuracy: 0.0001)
+        synthesizer.progress(to: 6) // about to say "new"
+        XCTAssertEqual(controller.progress, 12.0 / 21, accuracy: 0.0001)
+    }
+
+    func testProgressIsFullAfterNaturalFinish() {
+        makeController()
+        controller.speak("Hello", voiceID: nil, speed: .normal)
+        synthesizer.finish()
+        XCTAssertEqual(controller.progress, 1)
+    }
+
+    func testProgressResetsForNewReading() {
+        makeController()
+        controller.speak("Hello", voiceID: nil, speed: .normal)
+        synthesizer.finish()
+        controller.speak("Again", voiceID: nil, speed: .normal)
+        XCTAssertEqual(controller.progress, 0)
+    }
 }

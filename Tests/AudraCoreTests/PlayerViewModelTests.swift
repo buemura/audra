@@ -5,6 +5,7 @@ import XCTest
 @MainActor
 final class PlayerViewModelTests: XCTestCase {
     private let portuguese = VoiceInfo(id: "pt.luciana", name: "Luciana", language: "pt-BR", quality: .standard)
+    private let heart = VoiceInfo(id: "kokoro.af_heart", name: "Heart", language: "en-US", quality: .natural)
 
     private var synthesizer: FakeSynthesizer!
     private var speech: SpeechController!
@@ -20,7 +21,7 @@ final class PlayerViewModelTests: XCTestCase {
         speech = SpeechController(synthesizer: synthesizer)
         settings = SettingsStore(defaults: defaults)
         readSelectionCount = 0
-        let voices = [portuguese]
+        let voices = [portuguese, heart]
         return PlayerViewModel(
             speech: speech,
             settings: settings,
@@ -126,32 +127,49 @@ final class PlayerViewModelTests: XCTestCase {
         XCTAssertEqual(model.title, "Hello")
     }
 
-    func testSubtitleIsSpeedOnlyBeforeAnyReading() {
+    func testVoiceAndLanguageAreEmptyBeforeAnyReading() {
         let model = makeModel()
-        settings.speed = .oneAndHalf
-        XCTAssertEqual(model.subtitle, "1.5x")
+        XCTAssertNil(model.voiceLabel)
+        XCTAssertNil(model.languageLabel)
     }
 
-    func testSubtitleShowsSpeedAndInstalledVoice() {
+    func testSystemVoiceShowsKindAndLanguage() {
         let model = makeModel()
-        settings.speed = .oneAndHalf
         speech.speak("Olá", voiceID: "pt.luciana", speed: .normal)
-        XCTAssertEqual(model.subtitle, "1.5x · Luciana (pt-BR)")
+        XCTAssertEqual(model.voiceLabel, "System voice")
+        XCTAssertEqual(model.languageLabel, "pt-BR")
     }
 
-    func testSubtitleFallsBackToSystemVoiceForNilOrUnknownVoice() {
+    func testNaturalVoiceShowsKindAndLanguage() {
+        let model = makeModel()
+        speech.speak("Hello", voiceID: "kokoro.af_heart", speed: .normal)
+        XCTAssertEqual(model.voiceLabel, "Natural voice")
+        XCTAssertEqual(model.languageLabel, "en-US")
+    }
+
+    func testVoiceFallsBackToSystemVoiceForNilOrUnknownVoice() {
         let model = makeModel()
         speech.speak("Hello", voiceID: nil, speed: .normal)
-        XCTAssertEqual(model.subtitle, "1x · System voice")
+        XCTAssertEqual(model.voiceLabel, "System voice")
+        XCTAssertNil(model.languageLabel)
         speech.speak("Hello", voiceID: "not.installed", speed: .normal)
-        XCTAssertEqual(model.subtitle, "1x · System voice")
+        XCTAssertEqual(model.voiceLabel, "System voice")
+        XCTAssertNil(model.languageLabel)
     }
 
-    func testSubtitleFollowsSpeedChanges() {
+    func testSpeedReadsAndWritesSettings() {
         let model = makeModel()
-        speech.speak("Olá", voiceID: "pt.luciana", speed: .normal)
-        model.faster()
-        XCTAssertEqual(model.subtitle, "1.5x · Luciana (pt-BR)")
+        model.speed = .oneAndHalf
+        XCTAssertEqual(settings.speed, .oneAndHalf)
+        settings.speed = .double
+        XCTAssertEqual(model.speed, .double)
+    }
+
+    func testProgressFollowsSpeech() {
+        let model = makeModel()
+        speech.speak("Hello", voiceID: nil, speed: .normal)
+        synthesizer.finish()
+        XCTAssertEqual(model.progress, 1)
     }
 
     // MARK: Visibility

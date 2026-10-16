@@ -47,13 +47,28 @@ public final class PlayerViewModel: ObservableObject {
         return text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 
-    /// "1.5x · Luciana (pt-BR)", or just the speed before anything was read.
-    public var subtitle: String {
-        let speed = settings.speed.label
-        guard speech.currentText != nil else { return speed }
-        let voice = speech.currentVoiceID.flatMap { id in availableVoices().first { $0.id == id } }
-        let voiceLabel = voice.map { "\($0.name) (\($0.language))" } ?? "System voice"
-        return "\(speed) · \(voiceLabel)"
+    /// How much of the current reading has been spoken, from 0 to 1.
+    public var progress: Double { speech.progress }
+
+    public var speed: SpeechSpeed {
+        get { settings.speed }
+        set { settings.speed = newValue }
+    }
+
+    /// "Natural voice" or "System voice", or nil before anything was read.
+    public var voiceLabel: String? {
+        guard speech.currentText != nil else { return nil }
+        return currentVoice?.quality == .natural ? "Natural voice" : "System voice"
+    }
+
+    /// "pt-BR", or nil when the voice isn't known.
+    public var languageLabel: String? {
+        guard speech.currentText != nil else { return nil }
+        return currentVoice?.language
+    }
+
+    private var currentVoice: VoiceInfo? {
+        speech.currentVoiceID.flatMap { id in availableVoices().first { $0.id == id } }
     }
 
     /// Idle: read the current selection. Speaking: pause. Paused: resume.

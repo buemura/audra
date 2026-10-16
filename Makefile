@@ -16,7 +16,7 @@ reset-accessibility:
 
 ## Quit any running copy, wait for it to exit (opening during shutdown fails with -600), then open the built app
 open:
-	-pkill -x Audra
+	@pkill -x Audra || true
 	@while pgrep -x Audra >/dev/null; do sleep 0.1; done
 	open "$(APP)"
 

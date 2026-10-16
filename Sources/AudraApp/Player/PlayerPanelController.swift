@@ -22,8 +22,8 @@ final class PlayerPanelController {
         // .nonactivatingPanel keeps clicks from activating the app, so the source app and its
         // selection stay frontmost; borderless also keeps the panel from becoming key.
         panel = NSPanel(
-            contentRect: NSRect(origin: .zero, size: PlayerView.size),
-            styleMask: [.borderless, .nonactivatingPanel],
+            contentRect: NSRect(origin: .zero, size: PlayerView.defaultSize),
+            styleMask: [.borderless, .resizable, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -34,11 +34,14 @@ final class PlayerPanelController {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
-        panel.contentView = FirstMouseHostingView(rootView: PlayerView(model: viewModel))
+        panel.contentMinSize = PlayerView.minSize
 
-        // The saved frame may be from an older layout size or a monitor that's no longer attached.
+        // The saved frame may be smaller than the current layout allows, or on a monitor that's no longer attached.
         if panel.setFrameUsingName(Self.autosaveName) {
-            panel.setContentSize(PlayerView.size)
+            let size = panel.frame.size
+            if size.width < PlayerView.minSize.width || size.height < PlayerView.minSize.height {
+                panel.setContentSize(PlayerView.defaultSize)
+            }
             if !NSScreen.screens.contains(where: { $0.visibleFrame.intersects(panel.frame) }) {
                 placeAtBottomRight()
             }
@@ -46,6 +49,13 @@ final class PlayerPanelController {
             placeAtBottomRight()
         }
         panel.setFrameAutosaveName(Self.autosaveName)
+
+        // Attached only after the frame is set: this runs while SwiftUI is still building the app,
+        // and laying out the player then (as a frame change does) crashes AttributeGraph.
+        let hostingView = FirstMouseHostingView(rootView: PlayerView(model: viewModel))
+        // The window owns the size now that it's resizable; don't let SwiftUI pin it.
+        hostingView.sizingOptions = []
+        panel.contentView = hostingView
 
         visibilitySubscription = viewModel.$shouldBeVisible.sink { [weak self] visible in
             if visible { self?.show() } else { self?.scheduleHide() }
@@ -55,7 +65,7 @@ final class PlayerPanelController {
     private func placeAtBottomRight() {
         guard let visible = NSScreen.main?.visibleFrame else { return }
         panel.setFrameOrigin(NSPoint(
-            x: visible.maxX - PlayerView.size.width - Self.screenInset,
+            x: visible.maxX - panel.frame.width - Self.screenInset,
             y: visible.minY + Self.screenInset
         ))
     }
