@@ -1,7 +1,7 @@
 APP := build/Audra.app
 BUNDLE_ID := com.buemura.Audra
 
-.PHONY: run build reset-accessibility open test dmg clean
+.PHONY: run build reset-accessibility open test dmg release clean
 
 ## Build, reset the Accessibility grant and open the app
 run: build reset-accessibility open
@@ -29,6 +29,10 @@ test:
 
 dmg:
 	./scripts/make-dmg.sh
+
+## Build the DMG and publish it as GitHub release v<version> (bump Support/Info.plist first)
+release:
+	./scripts/release.sh
 
 clean:
 	rm -rf build .build

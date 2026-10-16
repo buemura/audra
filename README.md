@@ -20,6 +20,16 @@ A small macOS menu bar app that reads aloud the text you select in any applicati
 
 ## Install
 
+Run this in Terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/buemura/audra/main/scripts/install.sh | bash
+```
+
+It installs the latest release into /Applications and opens it. Run it again to update. Then grant **Accessibility** access when asked (step 3 below).
+
+Or install manually:
+
 1. Download `Audra-<version>.dmg`, open it, drag **Audra** to Applications.
 2. The app is not notarized yet, so macOS blocks the first launch:
    - Open the app once (it will be blocked), then go to System Settings → Privacy & Security, scroll down and click **Open Anyway**.
@@ -45,6 +55,7 @@ make test                  # run all tests (xcodebuild; ONLY=Target/TestClass fo
 swift test --filter AudraCoreTests   # fast: core logic only
 ./scripts/build-app.sh     # build "build/Audra.app" (Apple Silicon, ad-hoc signed)
 ./scripts/make-dmg.sh      # build build/Audra-<version>.dmg
+make release               # build the DMG and publish GitHub release v<version> (bump Support/Info.plist first)
 open "build/Audra.app"
 ```
 
