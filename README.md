@@ -9,7 +9,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/buemura/audra/releases/latest">Download</a> ·
   <a href="#install">Install</a> ·
   <a href="#usage">Usage</a> ·
   <a href="#troubleshooting">Troubleshooting</a> ·
@@ -38,8 +37,6 @@ Audra is a small, free menu bar app for macOS. It reads aloud the text you selec
 
 ## Install
 
-### Option 1: Terminal (recommended)
-
 Open **Terminal** (Applications → Utilities → Terminal), paste this line and press Return:
 
 ```bash
@@ -53,22 +50,13 @@ The script:
 3. installs it into `/Applications` (it asks for your password only if your account can't write there),
 4. opens it.
 
-Apps installed this way aren't blocked by macOS on first launch, so you can skip straight to [Grant Accessibility access](#grant-accessibility-access).
+Apps installed this way aren't blocked by macOS on first launch.
 
 To install a specific version, set `AUDRA_VERSION`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/buemura/audra/main/scripts/install.sh | AUDRA_VERSION=0.1.1 bash
 ```
-
-### Option 2: Download the DMG
-
-1. Download `Audra-<version>.dmg` from the [latest release](https://github.com/buemura/audra/releases/latest).
-2. Open the DMG and drag **Audra** onto the **Applications** folder.
-3. Open Audra from Applications. Audra isn't notarized by Apple yet, so macOS blocks this first launch and shows a warning. Click **Done**.
-4. Open **System Settings → Privacy & Security**, scroll down to the message about Audra and click **Open Anyway**. Confirm with your password or Touch ID.
-
-You only need to do this once.
 
 ### Grant Accessibility access
 
@@ -85,7 +73,7 @@ Audra downloads its natural voices (about 190 MB) the first time it opens. You'l
 
 ### Update
 
-Run the [Terminal command](#option-1-terminal-recommended) again. It replaces your copy with the latest release and keeps your settings and downloaded voices. If you installed from the DMG, download the new DMG and drag Audra to Applications again, choosing **Replace**.
+Run the [install command](#install) again. It replaces your copy with the latest release and keeps your settings and downloaded voices.
 
 After an update, macOS may stop trusting the old Accessibility permission. If reading stops working, see [Troubleshooting](#reading-stopped-working-after-an-update).
 
@@ -179,10 +167,6 @@ tccutil reset Accessibility com.buemura.Audra
 ```
 
 Then open Audra again and grant access when asked.
-
-#### "Audra can't be opened" or "Apple could not verify Audra"
-
-Audra isn't notarized yet. Follow steps 3–4 of [Download the DMG](#option-2-download-the-dmg), or install with the [Terminal command](#option-1-terminal-recommended), which avoids the warning.
 
 #### It doesn't work in Chrome, Slack or VS Code
 
