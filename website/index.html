@@ -24,6 +24,7 @@
       <span>Audra</span>
     </a>
     <nav aria-label="Sections">
+      <a href="#demo">Demo</a>
       <a href="#how">How it works</a>
       <a href="#voices">Voices</a>
       <a href="#privacy">Privacy</a>
@@ -114,6 +115,29 @@
           This player works. It reads with your browser's voice; Audra uses the natural voices on your Mac.
         </p>
       </div>
+    </section>
+
+    <!-- Demo: a screen recording of Audra reading in Chrome, with its natural voice -->
+    <section class="section" id="demo" aria-labelledby="demo-title">
+      <div class="section-head">
+        <h2 id="demo-title">See it on a real page</h2>
+        <p class="section-lede">
+          Two paragraphs of an article in Chrome, read aloud in a natural voice. Along the way the speed changes,
+          the player is resized and the menu bar menu opens. Turn the sound on to hear it.
+        </p>
+      </div>
+      <figure class="demo-frame">
+        <video id="demo-video" src="assets/demo.mp4" poster="assets/demo-poster.jpg" muted loop playsinline preload="metadata"
+          aria-label="Screen recording: two paragraphs are selected in Chrome and Audra's floating player reads them aloud"></video>
+        <div class="demo-controls">
+          <button class="demo-btn demo-sound" id="demo-sound" type="button" aria-pressed="false">
+            <svg class="i-muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></svg>
+            <svg class="i-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9zM16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13"/></svg>
+            <span>Turn sound on</span>
+          </button>
+          <button class="demo-btn" id="demo-toggle" type="button">Pause</button>
+        </div>
+      </figure>
     </section>
 
     <!-- How it works: a real three-step sequence -->

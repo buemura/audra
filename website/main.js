@@ -157,6 +157,7 @@
     text = text.replace(/\s+/g, " ").trim();
     if (!text) return;
     reading = { text, lang: lang || "en-US", sentences: splitSentences(text), pos: 0, row };
+    setDemoSound(false); // don't talk over the demo video
     speakFrom(0);
   }
 
@@ -287,6 +288,65 @@
     // Voices load asynchronously in Chrome.
     synth.getVoices();
     window.addEventListener("beforeunload", () => synth.cancel());
+  }
+
+  // ---------- Demo video ----------
+  // Plays muted and looped while on screen, like a GIF; sound is opt-in.
+  const video = $("#demo-video");
+  const btnSound = $("#demo-sound");
+  const btnToggle = $("#demo-toggle");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let userPaused = reduceMotion;
+  let videoVisible = false;
+
+  function renderDemo() {
+    btnToggle.textContent = video.paused ? "Play" : "Pause";
+    btnSound.setAttribute("aria-pressed", String(!video.muted));
+    btnSound.lastElementChild.textContent = video.muted ? "Turn sound on" : "Turn sound off";
+    btnSound.classList.toggle("is-on", !video.muted);
+  }
+
+  function setDemoSound(on) {
+    if (!video || video.muted === !on) return;
+    video.muted = !on;
+    renderDemo();
+  }
+
+  function playDemo() {
+    const p = video.play();
+    if (p) p.catch(() => {});
+  }
+
+  if (video) {
+    btnSound.addEventListener("click", () => {
+      const on = video.muted;
+      if (on) {
+        finish(); // stop the page's own reader
+        video.currentTime = 0; // hear it from the start
+        userPaused = false;
+        playDemo();
+      }
+      setDemoSound(on);
+    });
+    btnToggle.addEventListener("click", () => {
+      userPaused = !video.paused;
+      if (userPaused) video.pause();
+      else playDemo();
+    });
+    video.addEventListener("play", renderDemo);
+    video.addEventListener("pause", renderDemo);
+    video.addEventListener("volumechange", renderDemo);
+
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([entry]) => {
+        videoVisible = entry.isIntersecting;
+        if (!videoVisible) video.pause();
+        else if (!userPaused) playDemo();
+      }, { threshold: 0.4 }).observe(video);
+    } else if (!userPaused) {
+      playDemo();
+    }
+    renderDemo();
   }
 
   // ---------- Install: copy ----------
