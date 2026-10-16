@@ -15,7 +15,7 @@ Goal: replace the robotic-sounding system voices with natural neural voices, pri
 | Kokoro languages | en-US, en-GB, pt-BR, es, fr, it, hi, ja, zh (zh marked beta). All other languages keep system voices. |
 | Text → phonemes | en: MisakiSwift. es/pt-BR/fr/it/hi: eSpeak NG 1.52.0. ja: macOS `CFStringTokenizer` readings + rules + misaki kana table. zh: macOS `CFStringTokenizer` word pinyin + misaki pinyin rules. |
 | License | eSpeak NG is GPL-3.0, so the project becomes GPL-3.0 (add `LICENSE`, `THIRD_PARTY_NOTICES.md`). |
-| Model delivery | fp16 weights (`kokoro-v1_0-fp16.safetensors`, 164 MB; judged indistinguishable from fp32 by ear) + `voices.npz` (27 MB). Downloaded automatically in the background on first launch from release `kokoro-model-v1` of the public repo `buemura/screen-reader-models` (the app repo is private); SHA-256 pinned in code. System voices are used until it is ready. Removable from Settings. |
+| Model delivery | fp16 weights (`kokoro-v1_0-fp16.safetensors`, 164 MB; judged indistinguishable from fp32 by ear) + `voices.npz` (27 MB). Downloaded automatically in the background on first launch from release `kokoro-model-v1` of the public repo `buemura/audra-models` (the app repo is private); SHA-256 pinned in code. System voices are used until it is ready. Removable from Settings. |
 | Platform | macOS 15+, Apple Silicon only (was macOS 14+, universal). |
 | Voice UX | Kokoro voices appear in the existing voice pickers with a new `.natural` quality ranked above Premium; with no override, a supported language gets its default Kokoro voice. |
 | Live changes | Speed/voice changes mid-reading restart from the start of the current sentence (was: current word). |
@@ -38,7 +38,7 @@ ReadSelectionCoordinator ─▶ VoiceSelector (system + Kokoro voices)
    KokoroModelStore ── download / verify / remove, publishes state
 ```
 
-Pure logic and protocols live in `ScreenReaderCore` (synthesizers, splitter, catalog, model store, Japanese/Chinese phonemizers). Code that links MLX, MisakiSwift or eSpeak NG lives in a new `ScreenReaderKokoro` target (`MLXKokoroEngine`, `EnglishPhonemizer`, `ESpeakPhonemizer`, `KokoroPhonemizers`), so Core stays fast to build and test. Each unit depends on protocols so it can be tested with fakes.
+Pure logic and protocols live in `AudraCore` (synthesizers, splitter, catalog, model store, Japanese/Chinese phonemizers). Code that links MLX, MisakiSwift or eSpeak NG lives in a new `AudraKokoro` target (`MLXKokoroEngine`, `EnglishPhonemizer`, `ESpeakPhonemizer`, `KokoroPhonemizers`), so Core stays fast to build and test. Each unit depends on protocols so it can be tested with fakes.
 
 ### `SpeechSynthesizing` interface change
 
@@ -119,7 +119,7 @@ Note: rule 2 (default voice if it speaks the detected language) still wins over 
 - On launch: if both files exist → `ready` (checksums verified only after download, not every launch). Otherwise start the download automatically.
 - Download with `URLSession` (behind a `ModelDownloading` protocol); store resume data on failure; verify SHA-256 against constants; move into place atomically; → `ready`.
 - `retry()` (from Settings), `remove()` (deletes the directory, → `notDownloaded`, does not auto-download again until next launch or retry).
-- Source: GitHub Release `kokoro-model-v1` on the public repo `buemura/screen-reader-models`. URLs, sizes and checksums are constants in `KokoroModelAssets`.
+- Source: GitHub Release `kokoro-model-v1` on the public repo `buemura/audra-models`. URLs, sizes and checksums are constants in `KokoroModelAssets`.
 
 ## UI
 
@@ -141,7 +141,7 @@ Note: rule 2 (default voice if it speaks the detected language) still wins over 
 
 ## Testing
 
-TDD, unit tests in `ScreenReaderCoreTests` with fakes for `KokoroEngine`, `AudioOutput`, `ModelDownloading`:
+TDD, unit tests in `AudraCoreTests` with fakes for `KokoroEngine`, `AudioOutput`, `ModelDownloading`:
 
 - `RoutingSynthesizer`: routing by ID; forwarding pause/resume/stop; callbacks only from the active engine; engine switch stops the previous one; fallback continuation on Kokoro failure.
 - `KokoroSynthesizer`: sentence order; look-ahead ≤ 2; progress offsets; finish after last sentence; stop mid-synthesis ignores late results; no `onFinish` after stop; failed sentence skipped.
@@ -151,7 +151,7 @@ TDD, unit tests in `ScreenReaderCoreTests` with fakes for `KokoroEngine`, `Audio
 - `KokoroModelStore`: state transitions; checksum mismatch → `failed`; retry; remove; launch with files present → `ready`.
 - `SpeechController`: existing tests updated for `SpeechSpeed`.
 
-`make test` runs everything with `xcodebuild test` (MLX needs Xcode's Metal toolchain). `swift test --filter ScreenReaderCoreTests` still works for Core alone.
+`make test` runs everything with `xcodebuild test` (MLX needs Xcode's Metal toolchain). `swift test --filter AudraCoreTests` still works for Core alone.
 
 Manual check: in the built app, read the fixed sample sentences in all 9 language variants; check pause/resume, speed change mid-reading, stop, and first-launch download + remove.
 

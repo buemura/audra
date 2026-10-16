@@ -14,7 +14,7 @@ includes eSpeak NG. It also includes or downloads the following:
 | ZIPFoundation (linked via MLXUtilsLibrary) | MIT | https://github.com/weichsel/ZIPFoundation |
 | KeyboardShortcuts | MIT | https://github.com/sindresorhus/KeyboardShortcuts |
 | Kokoro-82M v1.0 model weights and voices (downloaded at runtime) | Apache-2.0 | https://huggingface.co/hexgrad/Kokoro-82M |
-| misaki G2P tables and rules, ported in `Sources/ScreenReaderCore/Phonemes` | Apache-2.0 | https://github.com/hexgrad/misaki |
+| misaki G2P tables and rules, ported in `Sources/AudraCore/Phonemes` | Apache-2.0 | https://github.com/hexgrad/misaki |
 | cutlet kana table (via misaki) | MIT | https://github.com/polm/cutlet |
 | pinyin-to-ipa transcription rules (via misaki) | MIT | https://github.com/stefantaubert/pinyin-to-ipa |
 

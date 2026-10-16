@@ -1,6 +1,6 @@
 # Audra — Floating Player Design
 
-Adds a small always-on-top player widget so reading can be controlled without the hotkey or menu bar. Builds on `2026-10-01-screen-reader-design.md`.
+Adds a small always-on-top player widget so reading can be controlled without the hotkey or menu bar. Builds on `2026-10-01-audra-design.md`.
 
 ## Decisions
 
@@ -19,7 +19,7 @@ Adds a small always-on-top player widget so reading can be controlled without th
 
 ## Components
 
-### ScreenReaderCore (unit-tested, no AppKit)
+### AudraCore (unit-tested, no AppKit)
 
 - **`SpeechSpeed`**: `slower: SpeechSpeed?` and `faster: SpeechSpeed?` — adjacent case in `allCases` order, nil at the ends.
 - **`SpeechController`**: new `@Published public private(set) var currentText: String?` and `currentVoiceID: String?`, set by `speak(...)` to the original text and voice. Not changed by `changeRate` (which internally trims the remaining text) or by `stop`/finishing.
@@ -31,7 +31,7 @@ Adds a small always-on-top player widget so reading can be controlled without th
   - `shouldBeVisible: Bool` — `state != .idle || settings.alwaysShowPlayer`. (The 3 s hide delay is the panel controller's job, not the model's.)
   - Actions: `playPause() async`, `slower()`, `faster()`, `stop()`.
 
-### ScreenReaderApp
+### AudraApp
 
 - **`PlayerView`** (SwiftUI): renders `PlayerViewModel`; no logic beyond layout and calling actions.
 - **`PlayerPanelController`**: owns the `NSPanel`, observes `PlayerViewModel.shouldBeVisible`, applies the 3 s hide delay and fades, restores/saves position.

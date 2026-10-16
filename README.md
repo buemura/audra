@@ -42,7 +42,7 @@ The app first asks the Accessibility API for the selection. Some apps (e.g. Chro
 ```bash
 make run                   # build, reset the Accessibility grant and open the app
 make test                  # run all tests (xcodebuild; ONLY=Target/TestClass for a subset)
-swift test --filter ScreenReaderCoreTests   # fast: core logic only
+swift test --filter AudraCoreTests   # fast: core logic only
 ./scripts/build-app.sh     # build "build/Audra.app" (Apple Silicon, ad-hoc signed)
 ./scripts/make-dmg.sh      # build build/Audra-<version>.dmg
 open "build/Audra.app"
@@ -56,11 +56,11 @@ tccutil reset Accessibility com.buemura.Audra
 
 Project layout:
 
-- `Sources/ScreenReaderCore` — all logic (speech, voices, language detection, text capture, settings), unit-tested.
-- `Sources/ScreenReaderKokoro` — the Kokoro engine (MLX) and the English/eSpeak phonemizers.
+- `Sources/AudraCore` — all logic (speech, voices, language detection, text capture, settings), unit-tested.
+- `Sources/AudraKokoro` — the Kokoro engine (MLX) and the English/eSpeak phonemizers.
 - `Packages/` — vendored KokoroSwift (patched) and eSpeak NG; see their `VENDORED.md`.
-- `scripts/prepare-kokoro-assets.py` — builds the model files published at https://github.com/buemura/screen-reader-models/releases.
-- `Sources/ScreenReaderApp` — SwiftUI menu bar app and settings window.
+- `scripts/prepare-kokoro-assets.py` — builds the model files published at https://github.com/buemura/audra-models/releases.
+- `Sources/AudraApp` — SwiftUI menu bar app and settings window.
 - `Support/Info.plist`, `scripts/` — app bundle and DMG packaging.
 
 ## Roadmap

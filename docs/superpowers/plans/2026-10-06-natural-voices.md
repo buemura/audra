@@ -4,7 +4,7 @@
 
 **Goal:** Replace the robotic system voices with on-device Kokoro-82M neural voices for en, pt-BR, es, fr, it, hi, ja and zh. All other languages, and any failure, fall back to system voices.
 
-**Architecture:** A `RoutingSynthesizer` sits behind the existing `SpeechSynthesizing` interface. It sends `kokoro.*` voice IDs to a new `KokoroSynthesizer`: sentences → per-language phonemizer → MLX Kokoro engine → `AVAudioEngine`, with 2 sentences synthesized ahead. All other voice IDs go to the existing `AVSpeechSynthesizerAdapter`. Kokoro voices join the existing voice lists as a new `.natural` quality once `KokoroModelStore` has downloaded and verified the model. Pure logic lives in `ScreenReaderCore`; anything linking MLX, MisakiSwift or eSpeak NG lives in a new `ScreenReaderKokoro` target.
+**Architecture:** A `RoutingSynthesizer` sits behind the existing `SpeechSynthesizing` interface. It sends `kokoro.*` voice IDs to a new `KokoroSynthesizer`: sentences → per-language phonemizer → MLX Kokoro engine → `AVAudioEngine`, with 2 sentences synthesized ahead. All other voice IDs go to the existing `AVSpeechSynthesizerAdapter`. Kokoro voices join the existing voice lists as a new `.natural` quality once `KokoroModelStore` has downloaded and verified the model. Pure logic lives in `AudraCore`; anything linking MLX, MisakiSwift or eSpeak NG lives in a new `AudraKokoro` target.
 
 **Tech Stack:** Swift, SwiftUI, AVFoundation, NaturalLanguage, CFStringTokenizer, CryptoKit, MLX Swift 0.30.2, KokoroSwift (vendored), MisakiSwift 1.0.6, eSpeak NG 1.52.0 (prebuilt framework, vendored), XCTest.
 
@@ -23,7 +23,7 @@
 - Look-ahead: at most 3 sentence buffers queued (the one playing + 2 ahead).
 - The model is unloaded after 600 seconds without Kokoro speech.
 - Model files go in `~/Library/Application Support/Audra/Kokoro/`.
-- Model assets (release `kokoro-model-v1` on the **public** repo `buemura/screen-reader-models`):
+- Model assets (release `kokoro-model-v1` on the **public** repo `buemura/audra-models`):
   - `kokoro-v1_0-fp16.safetensors`: 163587908 bytes, sha256 `67d4b879ce0f0bc6d30169cca8dc424f192cbed5be811078d8ef7c4a34a34b1f`
   - `voices.npz`: 26645914 bytes, sha256 `9555acb689b3856bb58215b42e0ce65bcc228e1b6286df9c7d92d205e795d3dc`
 - Pinned third-party sources:
@@ -35,7 +35,7 @@
 - Every commit message ends with a blank line and then `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - Test commands:
   - Tasks 1–12: `swift test --filter <TestClass>`.
-  - From Task 13: `make test` (all tests) or `make test ONLY=<Target>/<TestClass>`. It uses `xcodebuild`; `swift test --filter ScreenReaderCoreTests` still works for Core alone.
+  - From Task 13: `make test` (all tests) or `make test ONLY=<Target>/<TestClass>`. It uses `xcodebuild`; `swift test --filter AudraCoreTests` still works for Core alone.
 
 ## File Structure
 
@@ -43,7 +43,7 @@
 Package.swift                                   (modify, Task 13)
 Packages/KokoroSwift/                           (create, Task 13: vendored + patched)
 Packages/ESpeakNG/                              (create, Task 13: vendored prebuilt framework)
-Sources/ScreenReaderCore/
+Sources/AudraCore/
   Speech/SpeechSynthesizing.swift               (modify: speed instead of rate)
   Speech/SpeechController.swift                 (modify)
   Speech/AVSpeechSynthesizerAdapter.swift       (modify)
@@ -66,15 +66,15 @@ Sources/ScreenReaderCore/
   Voices/VoiceInfo.swift                        (modify: .natural, sortOrder)
   Voices/VoiceSelector.swift                    (modify: sortOrder tie-break)
   ReadSelectionCoordinator.swift                (modify: speed)
-Sources/ScreenReaderKokoro/                     (create, Tasks 13, 15)
+Sources/AudraKokoro/                     (create, Tasks 13, 15)
   ESpeakPhonemizer.swift
   EnglishPhonemizer.swift
   MLXKokoroEngine.swift
   KokoroPhonemizers.swift
-Sources/ScreenReaderApp/
-  AppModel.swift, SettingsView.swift, MenuBarContent.swift, ScreenReaderApp.swift (modify, Task 16)
-Tests/ScreenReaderCoreTests/                    (new test files per task; Fakes/ extended)
-Tests/ScreenReaderKokoroTests/                  (create, Tasks 13, 15)
+Sources/AudraApp/
+  AppModel.swift, SettingsView.swift, MenuBarContent.swift, AudraApp.swift (modify, Task 16)
+Tests/AudraCoreTests/                    (new test files per task; Fakes/ extended)
+Tests/AudraKokoroTests/                  (create, Tasks 13, 15)
 scripts/build-app.sh, Makefile                  (modify, Task 13)
 scripts/prepare-kokoro-assets.py                (create, Task 14)
 Support/Info.plist                              (modify, Task 13: LSMinimumSystemVersion 15.0)
@@ -88,24 +88,24 @@ README.md, LICENSE, THIRD_PARTY_NOTICES.md      (Task 17)
 The synthesizer receives a `SpeechSpeed` instead of an AVSpeech rate. Kokoro needs a real speed multiplier; the system adapter keeps its tuned rate table internally.
 
 **Files:**
-- Modify: `Sources/ScreenReaderCore/Speech/SpeechSynthesizing.swift`
-- Modify: `Sources/ScreenReaderCore/Speech/AVSpeechSynthesizerAdapter.swift`
-- Modify: `Sources/ScreenReaderCore/Speech/SpeechController.swift`
-- Modify: `Sources/ScreenReaderCore/ReadSelectionCoordinator.swift`
-- Modify: `Tests/ScreenReaderCoreTests/Fakes/FakeSynthesizer.swift`
-- Modify: `Tests/ScreenReaderCoreTests/SpeechControllerTests.swift`
-- Modify: `Tests/ScreenReaderCoreTests/ReadSelectionCoordinatorTests.swift`
-- Modify: `Tests/ScreenReaderCoreTests/PlayerViewModelTests.swift`
+- Modify: `Sources/AudraCore/Speech/SpeechSynthesizing.swift`
+- Modify: `Sources/AudraCore/Speech/AVSpeechSynthesizerAdapter.swift`
+- Modify: `Sources/AudraCore/Speech/SpeechController.swift`
+- Modify: `Sources/AudraCore/ReadSelectionCoordinator.swift`
+- Modify: `Tests/AudraCoreTests/Fakes/FakeSynthesizer.swift`
+- Modify: `Tests/AudraCoreTests/SpeechControllerTests.swift`
+- Modify: `Tests/AudraCoreTests/ReadSelectionCoordinatorTests.swift`
+- Modify: `Tests/AudraCoreTests/PlayerViewModelTests.swift`
 
 **Interfaces:**
 - Produces: `SpeechSynthesizing.speak(_ text: String, voiceID: String?, speed: SpeechSpeed)`; `SpeechController.speak(_:voiceID:speed:)`; `SpeechController.changeSpeed(_ speed: SpeechSpeed)` (replaces `changeRate`); `FakeSynthesizer.Call.speak(text:voiceID:speed:)`. `FakeSynthesizer` becomes a non-final `class` so Task 11 can subclass it.
 
 - [ ] **Step 1: Update the fake and the tests to the new interface**
 
-Replace `Tests/ScreenReaderCoreTests/Fakes/FakeSynthesizer.swift` with:
+Replace `Tests/AudraCoreTests/Fakes/FakeSynthesizer.swift` with:
 
 ```swift
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 @MainActor
 class FakeSynthesizer: SpeechSynthesizing {
@@ -147,8 +147,8 @@ sed -i '' \
   -e 's/rate: 0\.6/speed: .oneAndHalf/g' \
   -e 's/changeRate(0\.7)/changeSpeed(.double)/g' \
   -e 's/changeRate(0\.6)/changeSpeed(.oneAndHalf)/g' \
-  Tests/ScreenReaderCoreTests/*.swift
-grep -n "rate:\|changeRate" Tests/ScreenReaderCoreTests/*.swift
+  Tests/AudraCoreTests/*.swift
+grep -n "rate:\|changeRate" Tests/AudraCoreTests/*.swift
 ```
 
 Expected: the final `grep` prints nothing.
@@ -171,13 +171,13 @@ Expected: compile errors such as `extra argument 'speed' in call` and `value of 
 
 - [ ] **Step 3: Implement**
 
-In `Sources/ScreenReaderCore/Speech/SpeechSynthesizing.swift`, replace `func speak(_ text: String, voiceID: String?, rate: Float)` with:
+In `Sources/AudraCore/Speech/SpeechSynthesizing.swift`, replace `func speak(_ text: String, voiceID: String?, rate: Float)` with:
 
 ```swift
     func speak(_ text: String, voiceID: String?, speed: SpeechSpeed)
 ```
 
-In `Sources/ScreenReaderCore/Speech/AVSpeechSynthesizerAdapter.swift`, replace the `speak` method with:
+In `Sources/AudraCore/Speech/AVSpeechSynthesizerAdapter.swift`, replace the `speak` method with:
 
 ```swift
     public func speak(_ text: String, voiceID: String?, speed: SpeechSpeed) {
@@ -191,7 +191,7 @@ In `Sources/ScreenReaderCore/Speech/AVSpeechSynthesizerAdapter.swift`, replace t
     }
 ```
 
-In `Sources/ScreenReaderCore/Speech/SpeechController.swift`:
+In `Sources/AudraCore/Speech/SpeechController.swift`:
 - replace `private var rate: Float = 0` with `private var speed: SpeechSpeed = .normal`;
 - replace the `speak` method, `changeRate`, and every `synthesizer.speak(..., rate: rate)` call as follows:
 
@@ -222,7 +222,7 @@ In `Sources/ScreenReaderCore/Speech/SpeechController.swift`:
 
 In `restartFromCurrentWord()` and `resume()`, change `synthesizer.speak(remaining, voiceID: voiceID, rate: rate)` / `synthesizer.speak(text, voiceID: voiceID, rate: rate)` to pass `speed: speed`. In the `changeVoice` doc comment, replace "like `changeRate`" with "like `changeSpeed`". Also update the comment on `spokenOffset` to: `/// UTF-16 offset in \`text\` of the last position the engine reported (a word for system voices, a sentence for Kokoro).`
 
-In `Sources/ScreenReaderCore/ReadSelectionCoordinator.swift`:
+In `Sources/AudraCore/ReadSelectionCoordinator.swift`:
 - the speed sink becomes `.sink { [weak speech] speed in speech?.changeSpeed(speed) }`;
 - the speak call becomes `speech.speak(text, voiceID: voiceID, speed: settings.speed)`.
 
@@ -245,9 +245,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 2: Natural voice quality and catalog order
 
 **Files:**
-- Modify: `Sources/ScreenReaderCore/Voices/VoiceInfo.swift`
-- Modify: `Sources/ScreenReaderCore/Voices/VoiceSelector.swift`
-- Test: `Tests/ScreenReaderCoreTests/VoiceSelectorTests.swift`
+- Modify: `Sources/AudraCore/Voices/VoiceInfo.swift`
+- Modify: `Sources/AudraCore/Voices/VoiceSelector.swift`
+- Test: `Tests/AudraCoreTests/VoiceSelectorTests.swift`
 
 **Interfaces:**
 - Produces: `VoiceInfo.Quality.natural` (raw value 4); `VoiceInfo.sortOrder: Int` (default 0; lower is preferred among voices of equal quality); `VoiceInfo.init(id:name:language:quality:sortOrder:)` with `sortOrder: Int = 0`; `menuLabel` for `.natural` is `"<name> (<language>, Natural)"`.
@@ -308,7 +308,7 @@ Expected: compile errors `type 'VoiceInfo.Quality' has no member 'natural'` and 
 
 - [ ] **Step 3: Implement**
 
-In `Sources/ScreenReaderCore/Voices/VoiceInfo.swift`:
+In `Sources/AudraCore/Voices/VoiceInfo.swift`:
 - add `case natural = 4` after `case premium = 3`, with the comment `/// Kokoro neural voice.`;
 - add a stored property after `quality`:
 
@@ -332,7 +332,7 @@ In `Sources/ScreenReaderCore/Voices/VoiceInfo.swift`:
 
 - add to `menuLabel`'s switch: `case .natural: return "\(name) (\(language), Natural)"`.
 
-In `Sources/ScreenReaderCore/Voices/VoiceSelector.swift`, update rule 3 in the doc comment to `/// 3. the best-quality installed voice for the detected language (ties: sortOrder, then name A–Z),` and replace the `.max` comparator with:
+In `Sources/AudraCore/Voices/VoiceSelector.swift`, update rule 3 in the doc comment to `/// 3. the best-quality installed voice for the detected language (ties: sortOrder, then name A–Z),` and replace the `.max` comparator with:
 
 ```swift
             .max { lhs, rhs in
@@ -350,7 +350,7 @@ Expected: all pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Voices Tests/ScreenReaderCoreTests/VoiceSelectorTests.swift
+git add Sources/AudraCore/Voices Tests/AudraCoreTests/VoiceSelectorTests.swift
 git commit -m "feat: add natural voice quality and catalog sort order
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -361,8 +361,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 3: Kokoro voice catalog
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Kokoro/KokoroVoiceCatalog.swift`
-- Test: `Tests/ScreenReaderCoreTests/KokoroVoiceCatalogTests.swift`
+- Create: `Sources/AudraCore/Kokoro/KokoroVoiceCatalog.swift`
+- Test: `Tests/AudraCoreTests/KokoroVoiceCatalogTests.swift`
 
 **Interfaces:**
 - Consumes: `VoiceInfo(id:name:language:quality:sortOrder:)` (Task 2).
@@ -373,11 +373,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/KokoroVoiceCatalogTests.swift`:
+Create `Tests/AudraCoreTests/KokoroVoiceCatalogTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class KokoroVoiceCatalogTests: XCTestCase {
     func testCatalogHas51UniqueVoicesCoveringEveryLanguage() {
@@ -430,7 +430,7 @@ Expected: compile error `cannot find 'KokoroVoiceCatalog' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Kokoro/KokoroVoiceCatalog.swift`:
+Create `Sources/AudraCore/Kokoro/KokoroVoiceCatalog.swift`:
 
 ```swift
 import Foundation
@@ -520,7 +520,7 @@ Expected: 5 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Kokoro Tests/ScreenReaderCoreTests/KokoroVoiceCatalogTests.swift
+git add Sources/AudraCore/Kokoro Tests/AudraCoreTests/KokoroVoiceCatalogTests.swift
 git commit -m "feat: add Kokoro voice catalog
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -531,19 +531,19 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 4: Sentence splitting
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Speech/SentenceSplitter.swift`
-- Test: `Tests/ScreenReaderCoreTests/SentenceSplitterTests.swift`
+- Create: `Sources/AudraCore/Speech/SentenceSplitter.swift`
+- Test: `Tests/AudraCoreTests/SentenceSplitterTests.swift`
 
 **Interfaces:**
 - Produces: `enum SentenceSplitter` with `struct Sentence: Equatable, Sendable { text: String; offset: Int }` (`offset` = UTF-16 offset of the first non-whitespace character in the original text), `static func sentences(in: String) -> [Sentence]`, `static func subdivide(_: String) -> [String]`.
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/SentenceSplitterTests.swift`:
+Create `Tests/AudraCoreTests/SentenceSplitterTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class SentenceSplitterTests: XCTestCase {
     private typealias Sentence = SentenceSplitter.Sentence
@@ -601,7 +601,7 @@ Expected: compile error `cannot find 'SentenceSplitter' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Speech/SentenceSplitter.swift`:
+Create `Sources/AudraCore/Speech/SentenceSplitter.swift`:
 
 ```swift
 import Foundation
@@ -673,7 +673,7 @@ Expected: 8 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Speech/SentenceSplitter.swift Tests/ScreenReaderCoreTests/SentenceSplitterTests.swift
+git add Sources/AudraCore/Speech/SentenceSplitter.swift Tests/AudraCoreTests/SentenceSplitterTests.swift
 git commit -m "feat: add sentence splitter for Kokoro synthesis
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -684,8 +684,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 5: Phonemizer protocol, joiner and fallback
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Phonemes/Phonemizer.swift`
-- Test: `Tests/ScreenReaderCoreTests/PhonemizerTests.swift`
+- Create: `Sources/AudraCore/Phonemes/Phonemizer.swift`
+- Test: `Tests/AudraCoreTests/PhonemizerTests.swift`
 
 **Interfaces:**
 - Produces:
@@ -695,11 +695,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/PhonemizerTests.swift`:
+Create `Tests/AudraCoreTests/PhonemizerTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class PhonemizerTests: XCTestCase {
     private struct Failing: Phonemizer {
@@ -761,7 +761,7 @@ Expected: compile error `cannot find type 'Phonemizer' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Phonemes/Phonemizer.swift`:
+Create `Sources/AudraCore/Phonemes/Phonemizer.swift`:
 
 ```swift
 import Foundation
@@ -827,7 +827,7 @@ Expected: 6 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Phonemes Tests/ScreenReaderCoreTests/PhonemizerTests.swift
+git add Sources/AudraCore/Phonemes Tests/AudraCoreTests/PhonemizerTests.swift
 git commit -m "feat: add phonemizer protocol, joiner and fallback
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -839,19 +839,19 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 6: Japanese number reader
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Phonemes/JapaneseNumberReader.swift`
-- Test: `Tests/ScreenReaderCoreTests/JapaneseNumberReaderTests.swift`
+- Create: `Sources/AudraCore/Phonemes/JapaneseNumberReader.swift`
+- Test: `Tests/AudraCoreTests/JapaneseNumberReaderTests.swift`
 
 **Interfaces:**
 - Produces: `enum JapaneseNumberReader` with `static let counters: Set<String>` (年 月 日 時 分 円 人 つ 歳 回 個), `static func reading(of number: String) -> String`, `static func reading(of number: String, counter: String) -> String`. Readings are pronunciation hiragana with long vowels written `ー` (e.g. じゅー), so the kana→phoneme step yields `ː`.
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/JapaneseNumberReaderTests.swift`:
+Create `Tests/AudraCoreTests/JapaneseNumberReaderTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class JapaneseNumberReaderTests: XCTestCase {
     func testPlainNumbers() {
@@ -887,7 +887,7 @@ Expected: compile error `cannot find 'JapaneseNumberReader' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Phonemes/JapaneseNumberReader.swift`:
+Create `Sources/AudraCore/Phonemes/JapaneseNumberReader.swift`:
 
 ```swift
 import Foundation
@@ -1033,7 +1033,7 @@ Expected: 2 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Phonemes/JapaneseNumberReader.swift Tests/ScreenReaderCoreTests/JapaneseNumberReaderTests.swift
+git add Sources/AudraCore/Phonemes/JapaneseNumberReader.swift Tests/AudraCoreTests/JapaneseNumberReaderTests.swift
 git commit -m "feat: add Japanese number reader
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -1046,9 +1046,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 How it works: digits (+ counter) are read by `JapaneseNumberReader`. The rest goes through `CFStringTokenizer` (ja), which yields a Latin transcription of each word's reading, converted to hiragana. Kana words keep their own spelling, and the particles は/へ/を become わ/え/お. In the kanji part of a word, long vowels become ー (とうきょう → とーきょー). Finally, misaki's cutlet table turns kana into phonemes. On the sample sentence this reproduces misaki's official output exactly.
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Phonemes/JapaneseKanaTable.swift`
-- Create: `Sources/ScreenReaderCore/Phonemes/JapanesePhonemizer.swift`
-- Test: `Tests/ScreenReaderCoreTests/JapanesePhonemizerTests.swift`
+- Create: `Sources/AudraCore/Phonemes/JapaneseKanaTable.swift`
+- Create: `Sources/AudraCore/Phonemes/JapanesePhonemizer.swift`
+- Test: `Tests/AudraCoreTests/JapanesePhonemizerTests.swift`
 
 **Interfaces:**
 - Consumes: `Phonemizer`, `PhonemeJoiner` (Task 5), `JapaneseNumberReader` (Task 6).
@@ -1056,11 +1056,11 @@ How it works: digits (+ counter) are read by `JapaneseNumberReader`. The rest go
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/JapanesePhonemizerTests.swift`:
+Create `Tests/AudraCoreTests/JapanesePhonemizerTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class JapanesePhonemizerTests: XCTestCase {
     private let phonemizer = JapanesePhonemizer()
@@ -1123,7 +1123,7 @@ Expected: compile error `cannot find 'JapanesePhonemizer' in scope`.
 
 - [ ] **Step 3: Add the kana table**
 
-Create `Sources/ScreenReaderCore/Phonemes/JapaneseKanaTable.swift`. This is misaki's `cutlet.py` `HEPBURN` table: 164 kana and digraphs, 25 symbols and 2 combining marks, 191 entries.
+Create `Sources/AudraCore/Phonemes/JapaneseKanaTable.swift`. This is misaki's `cutlet.py` `HEPBURN` table: 164 kana and digraphs, 25 symbols and 2 combining marks, 191 entries.
 
 ```swift
 import Foundation
@@ -1328,7 +1328,7 @@ enum JapaneseKanaTable {
 
 - [ ] **Step 4: Implement the phonemizer**
 
-Create `Sources/ScreenReaderCore/Phonemes/JapanesePhonemizer.swift`:
+Create `Sources/AudraCore/Phonemes/JapanesePhonemizer.swift`:
 
 ```swift
 import Foundation
@@ -1523,7 +1523,7 @@ Expected: 8 tests pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Phonemes Tests/ScreenReaderCoreTests/JapanesePhonemizerTests.swift
+git add Sources/AudraCore/Phonemes Tests/AudraCoreTests/JapanesePhonemizerTests.swift
 git commit -m "feat: add Japanese phonemizer
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -1534,9 +1534,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 8: Pinyin transcription and Chinese numbers
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Phonemes/PinyinTranscriber.swift`
-- Create: `Sources/ScreenReaderCore/Phonemes/ChineseNumberReader.swift`
-- Test: `Tests/ScreenReaderCoreTests/PinyinTranscriberTests.swift`
+- Create: `Sources/AudraCore/Phonemes/PinyinTranscriber.swift`
+- Create: `Sources/AudraCore/Phonemes/ChineseNumberReader.swift`
+- Test: `Tests/AudraCoreTests/PinyinTranscriberTests.swift`
 
 **Interfaces:**
 - Produces:
@@ -1545,11 +1545,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/PinyinTranscriberTests.swift`:
+Create `Tests/AudraCoreTests/PinyinTranscriberTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class PinyinTranscriberTests: XCTestCase {
     private typealias Syllable = PinyinTranscriber.Syllable
@@ -1603,7 +1603,7 @@ Expected: compile error `cannot find 'PinyinTranscriber' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Phonemes/PinyinTranscriber.swift`:
+Create `Sources/AudraCore/Phonemes/PinyinTranscriber.swift`:
 
 ```swift
 import Foundation
@@ -1735,7 +1735,7 @@ public enum PinyinTranscriber {
 }
 ```
 
-Create `Sources/ScreenReaderCore/Phonemes/ChineseNumberReader.swift`:
+Create `Sources/AudraCore/Phonemes/ChineseNumberReader.swift`:
 
 ```swift
 import Foundation
@@ -1809,7 +1809,7 @@ Expected: 4 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Phonemes Tests/ScreenReaderCoreTests/PinyinTranscriberTests.swift
+git add Sources/AudraCore/Phonemes Tests/AudraCoreTests/PinyinTranscriberTests.swift
 git commit -m "feat: add pinyin transcription and Chinese number reader
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -1822,8 +1822,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 `CFStringTokenizer` (zh-Hans) segments words and gives context-aware tone-marked pinyin per word: 银行 → yínháng. The character-by-character transform would give the wrong yín xíng. The pinyin is split into one syllable per Han character and transcribed with `PinyinTranscriber`. On the reference sentences this reproduces misaki's output exactly.
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Phonemes/ChinesePhonemizer.swift`
-- Test: `Tests/ScreenReaderCoreTests/ChinesePhonemizerTests.swift`
+- Create: `Sources/AudraCore/Phonemes/ChinesePhonemizer.swift`
+- Test: `Tests/AudraCoreTests/ChinesePhonemizerTests.swift`
 
 **Interfaces:**
 - Consumes: `Phonemizer`, `PhonemeJoiner` (Task 5), `PinyinTranscriber`, `ChineseNumberReader` (Task 8).
@@ -1831,11 +1831,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/ChinesePhonemizerTests.swift`:
+Create `Tests/AudraCoreTests/ChinesePhonemizerTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class ChinesePhonemizerTests: XCTestCase {
     private let phonemizer = ChinesePhonemizer()
@@ -1866,7 +1866,7 @@ Expected: compile error `cannot find 'ChinesePhonemizer' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Phonemes/ChinesePhonemizer.swift`:
+Create `Sources/AudraCore/Phonemes/ChinesePhonemizer.swift`:
 
 ```swift
 import Foundation
@@ -1957,7 +1957,7 @@ Expected: 3 tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Phonemes/ChinesePhonemizer.swift Tests/ScreenReaderCoreTests/ChinesePhonemizerTests.swift
+git add Sources/AudraCore/Phonemes/ChinesePhonemizer.swift Tests/AudraCoreTests/ChinesePhonemizerTests.swift
 git commit -m "feat: add Chinese phonemizer (beta)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -1968,12 +1968,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 10: Kokoro synthesizer
 
 **Files:**
-- Modify: `Sources/ScreenReaderCore/Speech/SpeechSynthesizing.swift` (add `FallibleSpeechSynthesizing`)
-- Create: `Sources/ScreenReaderCore/Kokoro/KokoroEngine.swift`
-- Create: `Sources/ScreenReaderCore/Speech/AudioOutput.swift`
-- Create: `Sources/ScreenReaderCore/Kokoro/KokoroSynthesizer.swift`
-- Create: `Tests/ScreenReaderCoreTests/Fakes/KokoroFakes.swift`
-- Test: `Tests/ScreenReaderCoreTests/KokoroSynthesizerTests.swift`
+- Modify: `Sources/AudraCore/Speech/SpeechSynthesizing.swift` (add `FallibleSpeechSynthesizing`)
+- Create: `Sources/AudraCore/Kokoro/KokoroEngine.swift`
+- Create: `Sources/AudraCore/Speech/AudioOutput.swift`
+- Create: `Sources/AudraCore/Kokoro/KokoroSynthesizer.swift`
+- Create: `Tests/AudraCoreTests/Fakes/KokoroFakes.swift`
+- Test: `Tests/AudraCoreTests/KokoroSynthesizerTests.swift`
 
 **Interfaces:**
 - Consumes: `SpeechSynthesizing`, `SpeechSpeed` (Task 1); `KokoroVoiceCatalog`, `KokoroLanguage` (Task 3); `SentenceSplitter` (Task 4); `Phonemizer` (Task 5).
@@ -1986,11 +1986,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Add the test fakes**
 
-Create `Tests/ScreenReaderCoreTests/Fakes/KokoroFakes.swift`:
+Create `Tests/AudraCoreTests/Fakes/KokoroFakes.swift`:
 
 ```swift
 import Foundation
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 @MainActor
 final class FakeKokoroEngine: KokoroEngine {
@@ -2082,11 +2082,11 @@ struct FakePhonemizer: Phonemizer {
 
 - [ ] **Step 2: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/KokoroSynthesizerTests.swift`:
+Create `Tests/AudraCoreTests/KokoroSynthesizerTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 @MainActor
 final class KokoroSynthesizerTests: XCTestCase {
@@ -2275,7 +2275,7 @@ Expected: compile errors such as `cannot find type 'KokoroEngine' in scope`.
 
 - [ ] **Step 4: Add the protocols**
 
-Append to `Sources/ScreenReaderCore/Speech/SpeechSynthesizing.swift`:
+Append to `Sources/AudraCore/Speech/SpeechSynthesizing.swift`:
 
 ```swift
 
@@ -2288,12 +2288,12 @@ public protocol FallibleSpeechSynthesizing: SpeechSynthesizing {
 }
 ```
 
-Create `Sources/ScreenReaderCore/Kokoro/KokoroEngine.swift`:
+Create `Sources/AudraCore/Kokoro/KokoroEngine.swift`:
 
 ```swift
 import Foundation
 
-/// The Kokoro neural network. The real implementation (MLX) lives in ScreenReaderKokoro.
+/// The Kokoro neural network. The real implementation (MLX) lives in AudraKokoro.
 public protocol KokoroEngine: AnyObject, Sendable {
     /// 24 kHz mono samples of `phonemes` spoken by the Kokoro voice `voiceID` (e.g. "af_heart").
     func synthesize(phonemes: String, voiceID: String, speed: Float) async throws -> [Float]
@@ -2307,7 +2307,7 @@ public enum KokoroEngineError: Error, Equatable {
 }
 ```
 
-Create `Sources/ScreenReaderCore/Speech/AudioOutput.swift`:
+Create `Sources/AudraCore/Speech/AudioOutput.swift`:
 
 ```swift
 import AVFoundation
@@ -2395,7 +2395,7 @@ public final class AVAudioEngineOutput: AudioOutput {
 
 - [ ] **Step 5: Implement the synthesizer**
 
-Create `Sources/ScreenReaderCore/Kokoro/KokoroSynthesizer.swift`:
+Create `Sources/AudraCore/Kokoro/KokoroSynthesizer.swift`:
 
 ```swift
 import Foundation
@@ -2570,7 +2570,7 @@ Expected: 14 tests pass. Then run `swift test`: everything passes.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore Tests/ScreenReaderCoreTests
+git add Sources/AudraCore Tests/AudraCoreTests
 git commit -m "feat: add Kokoro synthesizer with sentence look-ahead
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -2581,9 +2581,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 11: Routing synthesizer
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Speech/RoutingSynthesizer.swift`
-- Modify: `Tests/ScreenReaderCoreTests/Fakes/FakeSynthesizer.swift` (add `FakeFallibleSynthesizer`)
-- Test: `Tests/ScreenReaderCoreTests/RoutingSynthesizerTests.swift`
+- Create: `Sources/AudraCore/Speech/RoutingSynthesizer.swift`
+- Modify: `Tests/AudraCoreTests/Fakes/FakeSynthesizer.swift` (add `FakeFallibleSynthesizer`)
+- Test: `Tests/AudraCoreTests/RoutingSynthesizerTests.swift`
 
 **Interfaces:**
 - Consumes: `SpeechSynthesizing`, `FallibleSpeechSynthesizing` (Tasks 1, 10); `KokoroVoiceCatalog.isKokoroVoiceID` (Task 3).
@@ -2591,7 +2591,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `Tests/ScreenReaderCoreTests/Fakes/FakeSynthesizer.swift`:
+Append to `Tests/AudraCoreTests/Fakes/FakeSynthesizer.swift`:
 
 ```swift
 
@@ -2604,11 +2604,11 @@ final class FakeFallibleSynthesizer: FakeSynthesizer, FallibleSpeechSynthesizing
 }
 ```
 
-Create `Tests/ScreenReaderCoreTests/RoutingSynthesizerTests.swift`:
+Create `Tests/AudraCoreTests/RoutingSynthesizerTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 @MainActor
 final class RoutingSynthesizerTests: XCTestCase {
@@ -2702,7 +2702,7 @@ Expected: compile error `cannot find 'RoutingSynthesizer' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Speech/RoutingSynthesizer.swift`:
+Create `Sources/AudraCore/Speech/RoutingSynthesizer.swift`:
 
 ```swift
 import Foundation
@@ -2792,7 +2792,7 @@ Expected: all pass, including 5 new `RoutingSynthesizerTests`.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Speech/RoutingSynthesizer.swift Tests/ScreenReaderCoreTests
+git add Sources/AudraCore/Speech/RoutingSynthesizer.swift Tests/AudraCoreTests
 git commit -m "feat: route Kokoro voices to the Kokoro synthesizer with system fallback
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -2803,11 +2803,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 12: Model store and downloader
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Kokoro/KokoroModelStore.swift`
-- Create: `Sources/ScreenReaderCore/Kokoro/KokoroModelAssets.swift`
-- Create: `Sources/ScreenReaderCore/Kokoro/URLSessionModelDownloader.swift`
-- Create: `Tests/ScreenReaderCoreTests/Fakes/FakeModelDownloader.swift`
-- Test: `Tests/ScreenReaderCoreTests/KokoroModelStoreTests.swift`
+- Create: `Sources/AudraCore/Kokoro/KokoroModelStore.swift`
+- Create: `Sources/AudraCore/Kokoro/KokoroModelAssets.swift`
+- Create: `Sources/AudraCore/Kokoro/URLSessionModelDownloader.swift`
+- Create: `Tests/AudraCoreTests/Fakes/FakeModelDownloader.swift`
+- Test: `Tests/AudraCoreTests/KokoroModelStoreTests.swift`
 
 **Interfaces:**
 - Produces:
@@ -2822,11 +2822,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/Fakes/FakeModelDownloader.swift`:
+Create `Tests/AudraCoreTests/Fakes/FakeModelDownloader.swift`:
 
 ```swift
 import Foundation
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 final class FakeModelDownloader: ModelDownloading, @unchecked Sendable {
     var files: [URL: Data] = [:]
@@ -2845,12 +2845,12 @@ final class FakeModelDownloader: ModelDownloading, @unchecked Sendable {
 }
 ```
 
-Create `Tests/ScreenReaderCoreTests/KokoroModelStoreTests.swift`:
+Create `Tests/AudraCoreTests/KokoroModelStoreTests.swift`:
 
 ```swift
 import CryptoKit
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 @MainActor
 final class KokoroModelStoreTests: XCTestCase {
@@ -2947,7 +2947,7 @@ final class KokoroModelStoreTests: XCTestCase {
         XCTAssertEqual(KokoroModelAssets.all.map(\.fileName), ["kokoro-v1_0-fp16.safetensors", "voices.npz"])
         XCTAssertEqual(KokoroModelAssets.all.map(\.byteCount), [163_587_908, 26_645_914])
         XCTAssertTrue(KokoroModelAssets.all.allSatisfy {
-            $0.url.absoluteString.hasPrefix("https://github.com/buemura/screen-reader-models/releases/download/kokoro-model-v1/")
+            $0.url.absoluteString.hasPrefix("https://github.com/buemura/audra-models/releases/download/kokoro-model-v1/")
                 && $0.sha256.count == 64
         })
     }
@@ -2961,7 +2961,7 @@ Expected: compile error `cannot find type 'ModelDownloading' in scope`.
 
 - [ ] **Step 3: Implement the store**
 
-Create `Sources/ScreenReaderCore/Kokoro/KokoroModelStore.swift`:
+Create `Sources/AudraCore/Kokoro/KokoroModelStore.swift`:
 
 ```swift
 import CryptoKit
@@ -3119,18 +3119,18 @@ public final class KokoroModelStore: ObservableObject {
 }
 ```
 
-Create `Sources/ScreenReaderCore/Kokoro/KokoroModelAssets.swift`:
+Create `Sources/AudraCore/Kokoro/KokoroModelAssets.swift`:
 
 ```swift
 import Foundation
 
 /// The model files the app downloads, built by scripts/prepare-kokoro-assets.py and published as
-/// release `kokoro-model-v1` of the public repo buemura/screen-reader-models.
+/// release `kokoro-model-v1` of the public repo buemura/audra-models.
 public enum KokoroModelAssets {
     public static let modelFileName = "kokoro-v1_0-fp16.safetensors"
     public static let voicesFileName = "voices.npz"
 
-    private static let releaseURL = URL(string: "https://github.com/buemura/screen-reader-models/releases/download/kokoro-model-v1/")!
+    private static let releaseURL = URL(string: "https://github.com/buemura/audra-models/releases/download/kokoro-model-v1/")!
 
     public static let all: [KokoroModelStore.Asset] = [
         KokoroModelStore.Asset(
@@ -3151,7 +3151,7 @@ public enum KokoroModelAssets {
 
 - [ ] **Step 4: Implement the URLSession downloader**
 
-Create `Sources/ScreenReaderCore/Kokoro/URLSessionModelDownloader.swift`:
+Create `Sources/AudraCore/Kokoro/URLSessionModelDownloader.swift`:
 
 ```swift
 import Foundation
@@ -3238,7 +3238,7 @@ Expected: all pass, including 7 new `KokoroModelStoreTests`.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Kokoro Tests/ScreenReaderCoreTests
+git add Sources/AudraCore/Kokoro Tests/AudraCoreTests
 git commit -m "feat: add Kokoro model store with verified download
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3248,21 +3248,21 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ### Task 13: Package restructure, vendored engines and eSpeak phonemizer
 
-This task switches the project to macOS 15 / Apple Silicon and an `xcodebuild`-based build. MLX's Metal shaders only compile under Xcode. It vendors KokoroSwift (with two patches) and the prebuilt eSpeak NG framework, and adds the `ScreenReaderKokoro` target with its first unit, `ESpeakPhonemizer`.
+This task switches the project to macOS 15 / Apple Silicon and an `xcodebuild`-based build. MLX's Metal shaders only compile under Xcode. It vendors KokoroSwift (with two patches) and the prebuilt eSpeak NG framework, and adds the `AudraKokoro` target with its first unit, `ESpeakPhonemizer`.
 
 **Files:**
 - Create: `Packages/KokoroSwift/` (vendored), `Packages/KokoroSwift/VENDORED.md`
 - Create: `Packages/ESpeakNG/` (vendored), `Packages/ESpeakNG/Package.swift`, `Packages/ESpeakNG/VENDORED.md`
 - Modify: `Package.swift`
-- Create: `Sources/ScreenReaderKokoro/ESpeakPhonemizer.swift`
-- Test: `Tests/ScreenReaderKokoroTests/ESpeakPhonemizerTests.swift`
+- Create: `Sources/AudraKokoro/ESpeakPhonemizer.swift`
+- Test: `Tests/AudraKokoroTests/ESpeakPhonemizerTests.swift`
 - Modify: `scripts/build-app.sh`, `Makefile`, `Support/Info.plist`
 
 **Interfaces:**
 - Consumes: `Phonemizer` (Task 5).
 - Produces:
   - SwiftPM products `KokoroSwift` (with `KokoroTTS.generateAudio(voice: MLXArray, phonemes: String, speed: Float) throws -> [Float]`) and `ESpeakNG` (C module).
-  - Target `ScreenReaderKokoro` containing `final class ESpeakPhonemizer: Phonemizer` with `init(language: String) throws` (eSpeak tags `"es"`, `"pt-br"`, `"fr-fr"`, `"it"`, `"hi"`, `"ja"`, `"cmn"`) and `enum Failure: Error, Equatable { case dataNotFound, initializationFailed, languageNotFound(String) }`.
+  - Target `AudraKokoro` containing `final class ESpeakPhonemizer: Phonemizer` with `init(language: String) throws` (eSpeak tags `"es"`, `"pt-br"`, `"fr-fr"`, `"it"`, `"hi"`, `"ja"`, `"cmn"`) and `enum Failure: Error, Equatable { case dataNotFound, initializationFailed, languageNotFound(String) }`.
   - `make test` runs all tests with `xcodebuild`.
 
 - [ ] **Step 1: Vendor KokoroSwift**
@@ -3428,8 +3428,8 @@ let package = Package(
     name: "Audra",
     platforms: [.macOS(.v15)],
     products: [
-        .executable(name: "Audra", targets: ["ScreenReaderApp"]),
-        .library(name: "ScreenReaderCore", targets: ["ScreenReaderCore"]),
+        .executable(name: "Audra", targets: ["AudraApp"]),
+        .library(name: "AudraCore", targets: ["AudraCore"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.0.0"),
@@ -3440,12 +3440,12 @@ let package = Package(
         .package(path: "Packages/ESpeakNG"),
     ],
     targets: [
-        .target(name: "ScreenReaderCore"),
+        .target(name: "AudraCore"),
         // Everything that links MLX, MisakiSwift or eSpeak NG.
         .target(
-            name: "ScreenReaderKokoro",
+            name: "AudraKokoro",
             dependencies: [
-                "ScreenReaderCore",
+                "AudraCore",
                 .product(name: "KokoroSwift", package: "KokoroSwift"),
                 .product(name: "ESpeakNG", package: "ESpeakNG"),
                 .product(name: "MisakiSwift", package: "MisakiSwift"),
@@ -3454,13 +3454,13 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "ScreenReaderApp",
-            dependencies: ["ScreenReaderCore", "ScreenReaderKokoro", "KeyboardShortcuts"],
+            name: "AudraApp",
+            dependencies: ["AudraCore", "AudraKokoro", "KeyboardShortcuts"],
             // The app bundle keeps the package frameworks (MLX, KokoroSwift, …) in Contents/Frameworks.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
-        .testTarget(name: "ScreenReaderCoreTests", dependencies: ["ScreenReaderCore"]),
-        .testTarget(name: "ScreenReaderKokoroTests", dependencies: ["ScreenReaderKokoro"]),
+        .testTarget(name: "AudraCoreTests", dependencies: ["AudraCore"]),
+        .testTarget(name: "AudraKokoroTests", dependencies: ["AudraKokoro"]),
     ],
     swiftLanguageModes: [.v5]
 )
@@ -3481,11 +3481,11 @@ Without `TEST_RUNNER_PACKAGE_RESOURCE_BUNDLE_PATH`, MisakiSwift and KokoroSwift 
 
 - [ ] **Step 6: Write the failing eSpeak test**
 
-Create `Tests/ScreenReaderKokoroTests/ESpeakPhonemizerTests.swift`:
+Create `Tests/AudraKokoroTests/ESpeakPhonemizerTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderKokoro
+@testable import AudraKokoro
 
 final class ESpeakPhonemizerTests: XCTestCase {
     func testMatchesMisakiReferenceOutput() throws {
@@ -3521,17 +3521,17 @@ final class ESpeakPhonemizerTests: XCTestCase {
 
 - [ ] **Step 7: Run it to verify it fails**
 
-Run: `make test ONLY=ScreenReaderKokoroTests/ESpeakPhonemizerTests 2>&1 | tail -20`
+Run: `make test ONLY=AudraKokoroTests/ESpeakPhonemizerTests 2>&1 | tail -20`
 Expected: build failure, `cannot find 'ESpeakPhonemizer' in scope`. If xcodebuild reports a missing Metal toolchain instead, run `xcodebuild -downloadComponent MetalToolchain` first. The first run also resolves packages and compiles MLX, which takes a few minutes.
 
 - [ ] **Step 8: Implement**
 
-Create `Sources/ScreenReaderKokoro/ESpeakPhonemizer.swift`:
+Create `Sources/AudraKokoro/ESpeakPhonemizer.swift`:
 
 ```swift
 import ESpeakNG
 import Foundation
-import ScreenReaderCore
+import AudraCore
 
 /// eSpeak NG phonemes post-processed for Kokoro the way misaki's `EspeakG2P` does, punctuation kept.
 /// eSpeak is a process-wide C library, so every call goes through one lock.
@@ -3641,7 +3641,7 @@ public final class ESpeakPhonemizer: Phonemizer, @unchecked Sendable {
 
 - [ ] **Step 9: Run the test to verify it passes**
 
-Run: `make test ONLY=ScreenReaderKokoroTests/ESpeakPhonemizerTests 2>&1 | grep -E "Executed|error|failed"`
+Run: `make test ONLY=AudraKokoroTests/ESpeakPhonemizerTests 2>&1 | grep -E "Executed|error|failed"`
 Expected: `Executed 3 tests, with 0 failures`.
 
 - [ ] **Step 10: Switch the app build to xcodebuild**
@@ -3686,8 +3686,8 @@ Expected: tests pass (all Core tests plus `ESpeakPhonemizerTests`); the app buil
 - [ ] **Step 12: Commit**
 
 ```bash
-git add Package.swift Package.resolved Packages Sources/ScreenReaderKokoro Tests/ScreenReaderKokoroTests scripts/build-app.sh Makefile Support/Info.plist
-git commit -m "build: vendor KokoroSwift and eSpeak NG, add ScreenReaderKokoro target
+git add Package.swift Package.resolved Packages Sources/AudraKokoro Tests/AudraKokoroTests scripts/build-app.sh Makefile Support/Info.plist
+git commit -m "build: vendor KokoroSwift and eSpeak NG, add AudraKokoro target
 
 Requires macOS 15 on Apple Silicon and builds with xcodebuild (MLX Metal shaders).
 
@@ -3702,7 +3702,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Create: `scripts/prepare-kokoro-assets.py`
 
 **Interfaces:**
-- Produces: `build/kokoro-assets/kokoro-v1_0-fp16.safetensors` and `build/kokoro-assets/voices.npz`, matching the sizes and checksums in Global Constraints and `KokoroModelAssets` (Task 12). The release `kokoro-model-v1` on the public repo `buemura/screen-reader-models` serves them.
+- Produces: `build/kokoro-assets/kokoro-v1_0-fp16.safetensors` and `build/kokoro-assets/voices.npz`, matching the sizes and checksums in Global Constraints and `KokoroModelAssets` (Task 12). The release `kokoro-model-v1` on the public repo `buemura/audra-models` serves them.
 
 - [ ] **Step 1: Add the script**
 
@@ -3841,9 +3841,9 @@ EOF
 git -C "$REPO_DIR" init --quiet -b main
 git -C "$REPO_DIR" add README.md
 git -C "$REPO_DIR" commit --quiet -m "Add README"
-gh repo create buemura/screen-reader-models --public --source="$REPO_DIR" --push \
+gh repo create buemura/audra-models --public --source="$REPO_DIR" --push \
     --description "Model files downloaded by Audra (Kokoro-82M, Apache-2.0)"
-gh release create kokoro-model-v1 --repo buemura/screen-reader-models --title "Kokoro model v1" \
+gh release create kokoro-model-v1 --repo buemura/audra-models --title "Kokoro model v1" \
     --notes "Kokoro-82M v1.0 (Apache-2.0): fp16 weights in KokoroSwift layout and voice styles." \
     build/kokoro-assets/kokoro-v1_0-fp16.safetensors build/kokoro-assets/voices.npz
 ```
@@ -3852,7 +3852,7 @@ gh release create kokoro-model-v1 --repo buemura/screen-reader-models --title "K
 
 ```bash
 for f in kokoro-v1_0-fp16.safetensors voices.npz; do
-  curl -sL "https://github.com/buemura/screen-reader-models/releases/download/kokoro-model-v1/$f" | shasum -a 256
+  curl -sL "https://github.com/buemura/audra-models/releases/download/kokoro-model-v1/$f" | shasum -a 256
 done
 ```
 
@@ -3872,12 +3872,12 @@ cp build/kokoro-assets/kokoro-v1_0-fp16.safetensors build/kokoro-assets/voices.n
 ### Task 15: English phonemizer, MLX engine and phonemizer registry
 
 **Files:**
-- Create: `Sources/ScreenReaderKokoro/EnglishPhonemizer.swift`
-- Create: `Sources/ScreenReaderKokoro/MLXKokoroEngine.swift`
-- Create: `Sources/ScreenReaderKokoro/KokoroPhonemizers.swift`
-- Test: `Tests/ScreenReaderKokoroTests/EnglishPhonemizerTests.swift`
-- Test: `Tests/ScreenReaderKokoroTests/KokoroPhonemizersTests.swift`
-- Test: `Tests/ScreenReaderKokoroTests/MLXKokoroEngineTests.swift`
+- Create: `Sources/AudraKokoro/EnglishPhonemizer.swift`
+- Create: `Sources/AudraKokoro/MLXKokoroEngine.swift`
+- Create: `Sources/AudraKokoro/KokoroPhonemizers.swift`
+- Test: `Tests/AudraKokoroTests/EnglishPhonemizerTests.swift`
+- Test: `Tests/AudraKokoroTests/KokoroPhonemizersTests.swift`
+- Test: `Tests/AudraKokoroTests/MLXKokoroEngineTests.swift`
 
 **Interfaces:**
 - Consumes: `KokoroEngine`, `KokoroEngineError` (Task 10); `Phonemizer`, `FallbackPhonemizer` (Task 5); `JapanesePhonemizer` (Task 7); `ChinesePhonemizer` (Task 9); `KokoroLanguage` (Task 3); `KokoroModelAssets` (Task 12); `ESpeakPhonemizer` and patched `KokoroTTS.generateAudio(voice:phonemes:speed:)` (Task 13).
@@ -3888,11 +3888,11 @@ cp build/kokoro-assets/kokoro-v1_0-fp16.safetensors build/kokoro-assets/voices.n
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderKokoroTests/EnglishPhonemizerTests.swift`:
+Create `Tests/AudraKokoroTests/EnglishPhonemizerTests.swift`:
 
 ```swift
 import XCTest
-@testable import ScreenReaderKokoro
+@testable import AudraKokoro
 
 final class EnglishPhonemizerTests: XCTestCase {
     func testAmericanEnglishMatchesMisaki() throws {
@@ -3905,12 +3905,12 @@ final class EnglishPhonemizerTests: XCTestCase {
 }
 ```
 
-Create `Tests/ScreenReaderKokoroTests/KokoroPhonemizersTests.swift`:
+Create `Tests/AudraKokoroTests/KokoroPhonemizersTests.swift`:
 
 ```swift
-import ScreenReaderCore
+import AudraCore
 import XCTest
-@testable import ScreenReaderKokoro
+@testable import AudraKokoro
 
 @MainActor
 final class KokoroPhonemizersTests: XCTestCase {
@@ -3930,12 +3930,12 @@ final class KokoroPhonemizersTests: XCTestCase {
 }
 ```
 
-Create `Tests/ScreenReaderKokoroTests/MLXKokoroEngineTests.swift`:
+Create `Tests/AudraKokoroTests/MLXKokoroEngineTests.swift`:
 
 ```swift
-import ScreenReaderCore
+import AudraCore
 import XCTest
-@testable import ScreenReaderKokoro
+@testable import AudraKokoro
 
 final class MLXKokoroEngineTests: XCTestCase {
     private var modelDirectory: URL {
@@ -3979,17 +3979,17 @@ final class MLXKokoroEngineTests: XCTestCase {
 
 - [ ] **Step 2: Run them to verify they fail**
 
-Run: `make test ONLY=ScreenReaderKokoroTests 2>&1 | grep -E "error:" | head -5`
+Run: `make test ONLY=AudraKokoroTests 2>&1 | grep -E "error:" | head -5`
 Expected: `cannot find 'EnglishPhonemizer' in scope` (and similar).
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderKokoro/EnglishPhonemizer.swift`:
+Create `Sources/AudraKokoro/EnglishPhonemizer.swift`:
 
 ```swift
 import Foundation
 import MisakiSwift
-import ScreenReaderCore
+import AudraCore
 
 /// English text → Kokoro phonemes with MisakiSwift, a port of the G2P Kokoro was trained with.
 public final class EnglishPhonemizer: Phonemizer, @unchecked Sendable {
@@ -4009,14 +4009,14 @@ public final class EnglishPhonemizer: Phonemizer, @unchecked Sendable {
 }
 ```
 
-Create `Sources/ScreenReaderKokoro/MLXKokoroEngine.swift`:
+Create `Sources/AudraKokoro/MLXKokoroEngine.swift`:
 
 ```swift
 import Foundation
 import KokoroSwift
 import MLX
 import MLXUtilsLibrary
-import ScreenReaderCore
+import AudraCore
 
 /// Kokoro on MLX. Loads the model on first use and unloads it after `idleTimeout` without speech.
 public actor MLXKokoroEngine: KokoroEngine {
@@ -4077,10 +4077,10 @@ public actor MLXKokoroEngine: KokoroEngine {
 }
 ```
 
-Create `Sources/ScreenReaderKokoro/KokoroPhonemizers.swift`:
+Create `Sources/AudraKokoro/KokoroPhonemizers.swift`:
 
 ```swift
-import ScreenReaderCore
+import AudraCore
 
 /// The phonemizer for each Kokoro language, created on first use (loading eSpeak and Misaki
 /// isn't free) and then reused.
@@ -4119,7 +4119,7 @@ Expected: everything passes. `MLXKokoroEngineTests.testSynthesizesSpeech` takes 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderKokoro Tests/ScreenReaderKokoroTests
+git add Sources/AudraKokoro Tests/AudraKokoroTests
 git commit -m "feat: add MLX Kokoro engine, English phonemizer and phonemizer registry
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -4130,10 +4130,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 16: Wire natural voices into the app
 
 **Files:**
-- Modify: `Sources/ScreenReaderApp/AppModel.swift`
-- Modify: `Sources/ScreenReaderApp/SettingsView.swift`
-- Modify: `Sources/ScreenReaderApp/MenuBarContent.swift`
-- Modify: `Sources/ScreenReaderApp/ScreenReaderApp.swift`
+- Modify: `Sources/AudraApp/AppModel.swift`
+- Modify: `Sources/AudraApp/SettingsView.swift`
+- Modify: `Sources/AudraApp/MenuBarContent.swift`
+- Modify: `Sources/AudraApp/AudraApp.swift`
 
 **Interfaces:**
 - Consumes: `RoutingSynthesizer` (Task 11), `KokoroSynthesizer`, `AVAudioEngineOutput` (Task 10), `KokoroModelStore`, `KokoroModelAssets`, `URLSessionModelDownloader` (Task 12), `KokoroVoiceCatalog` (Task 3), `MLXKokoroEngine`, `KokoroPhonemizers` (Task 15).
@@ -4143,15 +4143,15 @@ The app target has no unit tests. This task is checked by building and by Task 1
 
 - [ ] **Step 1: Wire the model store, engine and routing synthesizer**
 
-Replace `Sources/ScreenReaderApp/AppModel.swift` with:
+Replace `Sources/AudraApp/AppModel.swift` with:
 
 ```swift
 import AppKit
 import Combine
 import CoreGraphics
 import KeyboardShortcuts
-import ScreenReaderCore
-import ScreenReaderKokoro
+import AudraCore
+import AudraKokoro
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -4320,7 +4320,7 @@ final class AppModel: ObservableObject {
 
 - [ ] **Step 2: Add the Settings row and update the footnote**
 
-In `Sources/ScreenReaderApp/SettingsView.swift`, in `GeneralSettingsView.body`, add after the `Toggle("Detect the language …")` line:
+In `Sources/AudraApp/SettingsView.swift`, in `GeneralSettingsView.body`, add after the `Toggle("Detect the language …")` line:
 
 ```swift
 
@@ -4370,7 +4370,7 @@ In `VoiceSettingsView`, replace the footnote text with:
 
 - [ ] **Step 3: Show download progress in the menu**
 
-In `Sources/ScreenReaderApp/MenuBarContent.swift`, add a property to `MenuBarContent` after `@ObservedObject var settings: SettingsStore`:
+In `Sources/AudraApp/MenuBarContent.swift`, add a property to `MenuBarContent` after `@ObservedObject var settings: SettingsStore`:
 
 ```swift
     @ObservedObject var modelStore: KokoroModelStore
@@ -4385,7 +4385,7 @@ and insert at the top of `body`, before `if !model.hasAccessibilityPermission {`
         }
 ```
 
-In `Sources/ScreenReaderApp/ScreenReaderApp.swift`, change the menu content line to:
+In `Sources/AudraApp/AudraApp.swift`, change the menu content line to:
 
 ```swift
             MenuBarContent(model: model, speech: model.speech, settings: model.settings, modelStore: model.modelStore)
@@ -4399,7 +4399,7 @@ Expected: `Built build/Audra.app`; tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderApp
+git add Sources/AudraApp
 git commit -m "feat: use natural Kokoro voices in the app
 
 Downloads the model on first launch, lists natural voices in the pickers once
@@ -4414,7 +4414,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Files:**
 - Create: `LICENSE`, `THIRD_PARTY_NOTICES.md`
-- Modify: `README.md`, `docs/superpowers/specs/2026-10-01-screen-reader-design.md`
+- Modify: `README.md`, `docs/superpowers/specs/2026-10-01-audra-design.md`
 
 - [ ] **Step 1: License**
 
@@ -4442,7 +4442,7 @@ includes eSpeak NG. It also includes or downloads the following:
 | MLXUtilsLibrary | MIT | https://github.com/mlalma/MLXUtilsLibrary |
 | KeyboardShortcuts | MIT | https://github.com/sindresorhus/KeyboardShortcuts |
 | Kokoro-82M v1.0 model weights and voices (downloaded at runtime) | Apache-2.0 | https://huggingface.co/hexgrad/Kokoro-82M |
-| misaki G2P tables and rules, ported in `Sources/ScreenReaderCore/Phonemes` | Apache-2.0 | https://github.com/hexgrad/misaki |
+| misaki G2P tables and rules, ported in `Sources/AudraCore/Phonemes` | Apache-2.0 | https://github.com/hexgrad/misaki |
 | cutlet kana table (via misaki) | MIT | https://github.com/polm/cutlet |
 | pinyin-to-ipa transcription rules (via misaki) | MIT | https://github.com/stefantaubert/pinyin-to-ipa |
 ```
@@ -4482,16 +4482,16 @@ Natural voices download automatically the first time the app runs (progress show
 
 ```bash
 make test                  # run all tests (xcodebuild; ONLY=Target/TestClass for a subset)
-swift test --filter ScreenReaderCoreTests   # fast: core logic only
+swift test --filter AudraCoreTests   # fast: core logic only
 ./scripts/build-app.sh     # build "build/Audra.app" (Apple Silicon, ad-hoc signed)
 ```
 
-8. In Project layout, add after the `ScreenReaderCore` bullet:
+8. In Project layout, add after the `AudraCore` bullet:
 
 ```markdown
-- `Sources/ScreenReaderKokoro` — the Kokoro engine (MLX) and the English/eSpeak phonemizers.
+- `Sources/AudraKokoro` — the Kokoro engine (MLX) and the English/eSpeak phonemizers.
 - `Packages/` — vendored KokoroSwift (patched) and eSpeak NG; see their `VENDORED.md`.
-- `scripts/prepare-kokoro-assets.py` — builds the model files published at https://github.com/buemura/screen-reader-models/releases.
+- `scripts/prepare-kokoro-assets.py` — builds the model files published at https://github.com/buemura/audra-models/releases.
 ```
 
 9. Replace the Tech Stack list with:
@@ -4509,12 +4509,12 @@ GPL-3.0 (see `LICENSE`). Third-party components are listed in `THIRD_PARTY_NOTIC
 
 - [ ] **Step 3: Mark the superseded v1 decision**
 
-In `docs/superpowers/specs/2026-10-01-screen-reader-design.md`, append to the end of the `| Privacy |` table row's decision text (before the closing `|`): ` Superseded by 2026-10-01-natural-voices-design.md: the one-time model download is the only network access.` Do the same for the `| Platform |` row: ` Now macOS 15+, Apple Silicon only (natural voices design).`
+In `docs/superpowers/specs/2026-10-01-audra-design.md`, append to the end of the `| Privacy |` table row's decision text (before the closing `|`): ` Superseded by 2026-10-01-natural-voices-design.md: the one-time model download is the only network access.` Do the same for the `| Platform |` row: ` Now macOS 15+, Apple Silicon only (natural voices design).`
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add LICENSE THIRD_PARTY_NOTICES.md README.md docs/superpowers/specs/2026-10-01-screen-reader-design.md
+git add LICENSE THIRD_PARTY_NOTICES.md README.md docs/superpowers/specs/2026-10-01-audra-design.md
 git commit -m "docs: document natural voices, license under GPL-3.0
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"

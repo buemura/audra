@@ -4,7 +4,7 @@
 
 **Goal:** Add a small always-on-top player widget (play/pause, slower, faster, stop, text snippet, speed and voice) that controls reading without the hotkey or menu bar.
 
-**Architecture:** All button logic, labels and visibility rules live in a new `PlayerViewModel` in `ScreenReaderCore`, built on the existing `SpeechController` and `SettingsStore`, and unit-tested with the existing `FakeSynthesizer`. The app target adds a thin SwiftUI `PlayerView` and a `PlayerPanelController` that owns a non-activating, floating `NSPanel`. Non-activating matters: clicking the panel must not make Audra the frontmost app, or "read current selection" would read our own window. Speed changes reuse the existing `settings.$speed` → `SpeechController.changeRate` subscription in `ReadSelectionCoordinator`.
+**Architecture:** All button logic, labels and visibility rules live in a new `PlayerViewModel` in `AudraCore`, built on the existing `SpeechController` and `SettingsStore`, and unit-tested with the existing `FakeSynthesizer`. The app target adds a thin SwiftUI `PlayerView` and a `PlayerPanelController` that owns a non-activating, floating `NSPanel`. Non-activating matters: clicking the panel must not make Audra the frontmost app, or "read current selection" would read our own window. Speed changes reuse the existing `settings.$speed` → `SpeechController.changeRate` subscription in `ReadSelectionCoordinator`.
 
 **Tech Stack:** Swift (tools 5.10, Swift 5 language mode), SwiftUI, AppKit (`NSPanel`, `NSHostingView`), Combine, XCTest.
 
@@ -14,7 +14,7 @@
 
 - Minimum macOS: **14.0**. Do not use APIs newer than macOS 14 (e.g. no `WindowDragGesture`, no `.glassEffect`, no `.windowLevel`).
 - `// swift-tools-version: 5.10` stays. No new dependencies.
-- `ScreenReaderCore` must not import AppKit or SwiftUI.
+- `AudraCore` must not import AppKit or SwiftUI.
 - Look: solid grey card that adapts to light/dark. **No glass or blur.** ~240×120 pt, corner radius 20 pt.
 - Hide delay after reading goes idle: **3 s**. Fade duration: **~0.2 s**.
 - Placeholder title: exactly `Select text and press play`. Voice fallback label: exactly `System voice`. Subtitle separator: ` · ` (space, U+00B7, space).
@@ -26,19 +26,19 @@
 ## File Structure
 
 ```
-Sources/ScreenReaderCore/Speech/SpeechSpeed.swift          # + slower / faster (Task 1)
-Sources/ScreenReaderCore/Speech/SpeechController.swift     # + currentText / currentVoiceID (Task 2)
-Sources/ScreenReaderCore/Settings/SettingsStore.swift      # + alwaysShowPlayer (Task 3)
-Sources/ScreenReaderCore/Player/PlayerViewModel.swift      # NEW: player logic, labels, visibility (Task 4)
-Sources/ScreenReaderApp/Player/PlayerView.swift            # NEW: SwiftUI layout of the widget (Task 5)
-Sources/ScreenReaderApp/Player/PlayerPanelController.swift # NEW: NSPanel, show/hide, position (Task 5)
-Sources/ScreenReaderApp/AppModel.swift                     # creates view model + panel (Task 5)
-Sources/ScreenReaderApp/MenuBarContent.swift               # + "Show Player Always" toggle (Task 6)
+Sources/AudraCore/Speech/SpeechSpeed.swift          # + slower / faster (Task 1)
+Sources/AudraCore/Speech/SpeechController.swift     # + currentText / currentVoiceID (Task 2)
+Sources/AudraCore/Settings/SettingsStore.swift      # + alwaysShowPlayer (Task 3)
+Sources/AudraCore/Player/PlayerViewModel.swift      # NEW: player logic, labels, visibility (Task 4)
+Sources/AudraApp/Player/PlayerView.swift            # NEW: SwiftUI layout of the widget (Task 5)
+Sources/AudraApp/Player/PlayerPanelController.swift # NEW: NSPanel, show/hide, position (Task 5)
+Sources/AudraApp/AppModel.swift                     # creates view model + panel (Task 5)
+Sources/AudraApp/MenuBarContent.swift               # + "Show Player Always" toggle (Task 6)
 README.md                                                  # document the player (Task 6)
-Tests/ScreenReaderCoreTests/SpeechSpeedTests.swift         # (Task 1)
-Tests/ScreenReaderCoreTests/SpeechControllerTests.swift    # (Task 2)
-Tests/ScreenReaderCoreTests/SettingsStoreTests.swift       # (Task 3)
-Tests/ScreenReaderCoreTests/PlayerViewModelTests.swift     # NEW (Task 4)
+Tests/AudraCoreTests/SpeechSpeedTests.swift         # (Task 1)
+Tests/AudraCoreTests/SpeechControllerTests.swift    # (Task 2)
+Tests/AudraCoreTests/SettingsStoreTests.swift       # (Task 3)
+Tests/AudraCoreTests/PlayerViewModelTests.swift     # NEW (Task 4)
 ```
 
 ---
@@ -46,8 +46,8 @@ Tests/ScreenReaderCoreTests/PlayerViewModelTests.swift     # NEW (Task 4)
 ### Task 1: Speed stepping on `SpeechSpeed`
 
 **Files:**
-- Modify: `Sources/ScreenReaderCore/Speech/SpeechSpeed.swift`
-- Test: `Tests/ScreenReaderCoreTests/SpeechSpeedTests.swift`
+- Modify: `Sources/AudraCore/Speech/SpeechSpeed.swift`
+- Test: `Tests/AudraCoreTests/SpeechSpeedTests.swift`
 
 **Interfaces:**
 - Consumes: existing `SpeechSpeed` enum (`allCases` order: `.half, .normal, .oneAndHalf, .double, .twoAndHalf`).
@@ -55,7 +55,7 @@ Tests/ScreenReaderCoreTests/PlayerViewModelTests.swift     # NEW (Task 4)
 
 - [ ] **Step 1: Write the failing tests**
 
-Add these methods inside `SpeechSpeedTests` in `Tests/ScreenReaderCoreTests/SpeechSpeedTests.swift`:
+Add these methods inside `SpeechSpeedTests` in `Tests/AudraCoreTests/SpeechSpeedTests.swift`:
 
 ```swift
     func testFasterStepsToNextSpeedAndStopsAtTheTop() {
@@ -79,7 +79,7 @@ Expected: build failure, `value of type 'SpeechSpeed' has no member 'faster'` (a
 
 - [ ] **Step 3: Implement**
 
-In `Sources/ScreenReaderCore/Speech/SpeechSpeed.swift`, add inside the enum, after `label`:
+In `Sources/AudraCore/Speech/SpeechSpeed.swift`, add inside the enum, after `label`:
 
 ```swift
     /// The next slower speed, or nil at the slowest.
@@ -103,7 +103,7 @@ Expected: all `SpeechSpeedTests` pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Speech/SpeechSpeed.swift Tests/ScreenReaderCoreTests/SpeechSpeedTests.swift
+git add Sources/AudraCore/Speech/SpeechSpeed.swift Tests/AudraCoreTests/SpeechSpeedTests.swift
 git commit -m "feat: add slower/faster speed stepping
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -114,11 +114,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 2: Expose what is being read on `SpeechController`
 
 **Files:**
-- Modify: `Sources/ScreenReaderCore/Speech/SpeechController.swift`
-- Test: `Tests/ScreenReaderCoreTests/SpeechControllerTests.swift`
+- Modify: `Sources/AudraCore/Speech/SpeechController.swift`
+- Test: `Tests/AudraCoreTests/SpeechControllerTests.swift`
 
 **Interfaces:**
-- Consumes: existing `SpeechController.speak(_:voiceID:rate:)`, `changeRate(_:)`, `stop()`, and `FakeSynthesizer` (`Tests/ScreenReaderCoreTests/Fakes/FakeSynthesizer.swift`, with `finish()` and `progress(to:)`).
+- Consumes: existing `SpeechController.speak(_:voiceID:rate:)`, `changeRate(_:)`, `stop()`, and `FakeSynthesizer` (`Tests/AudraCoreTests/Fakes/FakeSynthesizer.swift`, with `finish()` and `progress(to:)`).
 - Produces: `@Published public private(set) var currentText: String?` and `@Published public private(set) var currentVoiceID: String?`. `speak` sets them to the original text and voice. `changeRate`, `stop` and a natural finish do **not** change them. Both are `nil` before the first `speak`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -167,7 +167,7 @@ Expected: build failure, `value of type 'SpeechController' has no member 'curren
 
 - [ ] **Step 3: Implement**
 
-In `Sources/ScreenReaderCore/Speech/SpeechController.swift`, add below `@Published public private(set) var state: State = .idle`:
+In `Sources/AudraCore/Speech/SpeechController.swift`, add below `@Published public private(set) var state: State = .idle`:
 
 ```swift
     /// The text of the current (or last) reading, as originally given to `speak`.
@@ -194,7 +194,7 @@ Expected: all `SpeechControllerTests` pass, old and new.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Speech/SpeechController.swift Tests/ScreenReaderCoreTests/SpeechControllerTests.swift
+git add Sources/AudraCore/Speech/SpeechController.swift Tests/AudraCoreTests/SpeechControllerTests.swift
 git commit -m "feat: publish current text and voice from SpeechController
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -205,8 +205,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 3: `alwaysShowPlayer` setting
 
 **Files:**
-- Modify: `Sources/ScreenReaderCore/Settings/SettingsStore.swift`
-- Test: `Tests/ScreenReaderCoreTests/SettingsStoreTests.swift`
+- Modify: `Sources/AudraCore/Settings/SettingsStore.swift`
+- Test: `Tests/AudraCoreTests/SettingsStoreTests.swift`
 
 **Interfaces:**
 - Consumes: existing `SettingsStore(defaults:)` pattern (`Key` enum, `didSet` persistence).
@@ -235,7 +235,7 @@ Expected: build failure, `value of type 'SettingsStore' has no member 'alwaysSho
 
 - [ ] **Step 3: Implement**
 
-In `Sources/ScreenReaderCore/Settings/SettingsStore.swift`:
+In `Sources/AudraCore/Settings/SettingsStore.swift`:
 
 Add to `enum Key`:
 
@@ -266,7 +266,7 @@ Expected: all `SettingsStoreTests` pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Settings/SettingsStore.swift Tests/ScreenReaderCoreTests/SettingsStoreTests.swift
+git add Sources/AudraCore/Settings/SettingsStore.swift Tests/AudraCoreTests/SettingsStoreTests.swift
 git commit -m "feat: add alwaysShowPlayer setting
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -277,8 +277,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 4: `PlayerViewModel`
 
 **Files:**
-- Create: `Sources/ScreenReaderCore/Player/PlayerViewModel.swift`
-- Test: `Tests/ScreenReaderCoreTests/PlayerViewModelTests.swift`
+- Create: `Sources/AudraCore/Player/PlayerViewModel.swift`
+- Test: `Tests/AudraCoreTests/PlayerViewModelTests.swift`
 
 **Interfaces:**
 - Consumes:
@@ -314,12 +314,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `Tests/ScreenReaderCoreTests/PlayerViewModelTests.swift`:
+Create `Tests/AudraCoreTests/PlayerViewModelTests.swift`:
 
 ```swift
 import Combine
 import XCTest
-@testable import ScreenReaderCore
+@testable import AudraCore
 
 @MainActor
 final class PlayerViewModelTests: XCTestCase {
@@ -531,7 +531,7 @@ Expected: build failure, `cannot find 'PlayerViewModel' in scope`.
 
 - [ ] **Step 3: Implement**
 
-Create `Sources/ScreenReaderCore/Player/PlayerViewModel.swift`:
+Create `Sources/AudraCore/Player/PlayerViewModel.swift`:
 
 ```swift
 import Combine
@@ -626,7 +626,7 @@ Expected: all tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/ScreenReaderCore/Player/PlayerViewModel.swift Tests/ScreenReaderCoreTests/PlayerViewModelTests.swift
+git add Sources/AudraCore/Player/PlayerViewModel.swift Tests/AudraCoreTests/PlayerViewModelTests.swift
 git commit -m "feat: add PlayerViewModel for the floating player
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -639,9 +639,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 The AppKit window and SwiftUI layout can't be unit-tested here. This task is verified by building and running the app (Step 5).
 
 **Files:**
-- Create: `Sources/ScreenReaderApp/Player/PlayerView.swift`
-- Create: `Sources/ScreenReaderApp/Player/PlayerPanelController.swift`
-- Modify: `Sources/ScreenReaderApp/AppModel.swift`
+- Create: `Sources/AudraApp/Player/PlayerView.swift`
+- Create: `Sources/AudraApp/Player/PlayerPanelController.swift`
+- Modify: `Sources/AudraApp/AppModel.swift`
 
 **Interfaces:**
 - Consumes: `PlayerViewModel` (Task 4): `init(speech:settings:availableVoices:readSelection:)`, `$shouldBeVisible`, `isPlaying`, `canStop`, `canGoSlower`, `canGoFaster`, `title`, `subtitle`, `playPause() async`, `slower()`, `faster()`, `stop()`. Also `SystemVoices.all() -> [VoiceInfo]` and `AppModel.readSelection() async`.
@@ -649,11 +649,11 @@ The AppKit window and SwiftUI layout can't be unit-tested here. This task is ver
 
 - [ ] **Step 1: Create the SwiftUI view**
 
-Create `Sources/ScreenReaderApp/Player/PlayerView.swift`:
+Create `Sources/AudraApp/Player/PlayerView.swift`:
 
 ```swift
 import AppKit
-import ScreenReaderCore
+import AudraCore
 import SwiftUI
 
 /// The floating player: what's being read on top, playback controls below.
@@ -748,12 +748,12 @@ private struct WindowDragArea: NSViewRepresentable {
 
 - [ ] **Step 2: Create the panel controller**
 
-Create `Sources/ScreenReaderApp/Player/PlayerPanelController.swift`:
+Create `Sources/AudraApp/Player/PlayerPanelController.swift`:
 
 ```swift
 import AppKit
 import Combine
-import ScreenReaderCore
+import AudraCore
 import SwiftUI
 
 /// Owns the floating player window: an always-on-top panel that never activates the app,
@@ -853,7 +853,7 @@ private final class FirstMouseHostingView<Content: View>: NSHostingView<Content>
 
 - [ ] **Step 3: Wire it into `AppModel`**
 
-In `Sources/ScreenReaderApp/AppModel.swift`:
+In `Sources/AudraApp/AppModel.swift`:
 
 Add a stored property below `private var permissionTimer: Timer?`:
 
@@ -896,7 +896,7 @@ If any step fails, stop and debug with superpowers:systematic-debugging before c
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Sources/ScreenReaderApp/Player Sources/ScreenReaderApp/AppModel.swift
+git add Sources/AudraApp/Player Sources/AudraApp/AppModel.swift
 git commit -m "feat: add floating player panel
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -907,7 +907,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 6: "Show Player Always" menu toggle, docs and full manual check
 
 **Files:**
-- Modify: `Sources/ScreenReaderApp/MenuBarContent.swift`
+- Modify: `Sources/AudraApp/MenuBarContent.swift`
 - Modify: `README.md`
 
 **Interfaces:**
@@ -916,7 +916,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Add the menu toggle**
 
-In `Sources/ScreenReaderApp/MenuBarContent.swift`, directly after the closing `}` of the `Picker("Speed", ...)` block and before the next `Divider()`, add:
+In `Sources/AudraApp/MenuBarContent.swift`, directly after the closing `}` of the `Picker("Speed", ...)` block and before the next `Divider()`, add:
 
 ```swift
 
@@ -958,7 +958,7 @@ Record any failure and fix it (superpowers:systematic-debugging) before committi
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Sources/ScreenReaderApp/MenuBarContent.swift README.md
+git add Sources/AudraApp/MenuBarContent.swift README.md
 git commit -m "feat: add Show Player Always toggle and document the player
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
