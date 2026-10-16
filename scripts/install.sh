@@ -32,7 +32,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Downloading Audra $VERSION…"
+echo "Downloading Audra ${VERSION}..."
 curl -fL --progress-bar "$BASE/$DMG_NAME" -o "$TMP/$DMG_NAME"
 curl -fsSL "$BASE/$DMG_NAME.sha256" -o "$TMP/$DMG_NAME.sha256"
 (cd "$TMP" && shasum -a 256 -c "$DMG_NAME.sha256" >/dev/null) \
