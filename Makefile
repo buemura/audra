@@ -14,9 +14,10 @@ build:
 reset-accessibility:
 	-tccutil reset Accessibility $(BUNDLE_ID)
 
-## Quit any running copy, then open the built app
+## Quit any running copy, wait for it to exit (opening during shutdown fails with -600), then open the built app
 open:
 	-pkill -x Audra
+	@while pgrep -x Audra >/dev/null; do sleep 0.1; done
 	open "$(APP)"
 
 ## Run all tests with xcodebuild (MLX needs the Metal toolchain). ONLY=Target/TestClass runs a subset.
