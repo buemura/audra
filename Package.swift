@@ -33,6 +33,7 @@ let package = Package(
         .executableTarget(
             name: "AudraApp",
             dependencies: ["AudraCore", "AudraKokoro", "KeyboardShortcuts"],
+            resources: [.process("Resources")],
             // The app bundle keeps the package frameworks (MLX, KokoroSwift, …) in Contents/Frameworks.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),

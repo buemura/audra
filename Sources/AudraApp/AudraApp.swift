@@ -8,7 +8,7 @@ struct AudraApp: App {
         MenuBarExtra {
             MenuBarContent(model: model, speech: model.speech, settings: model.settings, modelStore: model.modelStore)
         } label: {
-            MenuBarLabel(speech: model.speech)
+            MenuBarLabel()
         }
 
         Settings {

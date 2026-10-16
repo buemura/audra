@@ -1,11 +1,17 @@
+import AppKit
 import AudraCore
 import SwiftUI
 
 struct MenuBarLabel: View {
-    @ObservedObject var speech: SpeechController
+    /// The Audra logo as a template image, so macOS tints it to match the menu bar.
+    private static let icon: NSImage = {
+        let image = Bundle.module.image(forResource: "MenuBarIcon") ?? NSImage()
+        image.isTemplate = true
+        return image
+    }()
 
     var body: some View {
-        Image(systemName: speech.state == .idle ? "speaker.wave.2" : "speaker.wave.2.fill")
+        Image(nsImage: Self.icon)
     }
 }
 
