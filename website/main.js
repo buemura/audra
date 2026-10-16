@@ -289,28 +289,6 @@
     window.addEventListener("beforeunload", () => synth.cancel());
   }
 
-  // ---------- Install: tabs ----------
-  const tabs = $$('[role="tab"]');
-  function selectTab(tab) {
-    tabs.forEach((t) => {
-      const on = t === tab;
-      t.setAttribute("aria-selected", String(on));
-      t.tabIndex = on ? 0 : -1;
-      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
-    });
-  }
-  tabs.forEach((tab, i) => {
-    tab.addEventListener("click", () => selectTab(tab));
-    tab.addEventListener("keydown", (e) => {
-      const d = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
-      if (!d) return;
-      e.preventDefault();
-      const next = tabs[(i + d + tabs.length) % tabs.length];
-      selectTab(next);
-      next.focus();
-    });
-  });
-
   // ---------- Install: copy ----------
   $$(".copy").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -341,8 +319,6 @@
     .then((release) => {
       const version = String(release.tag_name || "").replace(/^v/, "");
       if (version) $$("[data-version]").forEach((el) => (el.textContent = `Version ${version}`));
-      const dmg = (release.assets || []).find((a) => /\.dmg$/i.test(a.name));
-      if (dmg) $$("[data-download]").forEach((a) => (a.href = dmg.browser_download_url));
     })
     .catch(() => {});
 

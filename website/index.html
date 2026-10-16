@@ -47,11 +47,11 @@
           Press the shortcut again to stop.
         </p>
         <div class="cta">
-          <a class="btn btn-primary" href="https://github.com/buemura/audra/releases/latest" data-download>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>
-            Download for Mac
+          <a class="btn btn-primary" href="#install">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 8 4 4-4 4M12 17h7"/></svg>
+            Install from Terminal
           </a>
-          <a class="btn btn-quiet" href="#install">Install from Terminal</a>
+          <a class="btn btn-quiet" href="https://github.com/buemura/audra">View on GitHub</a>
         </div>
         <p class="meta">
           <span data-version>Latest release</span> · macOS 15 Sequoia or later · Apple Silicon · Open source (GPL-3.0)
@@ -235,14 +235,9 @@
         <p class="section-lede">Requires macOS 15 Sequoia or later on a Mac with Apple Silicon.</p>
       </div>
 
-      <div class="tabs">
-        <div class="tablist" role="tablist" aria-label="Install method">
-          <button role="tab" id="tab-terminal" aria-controls="panel-terminal" aria-selected="true" type="button">Terminal <span class="tab-tag">recommended</span></button>
-          <button role="tab" id="tab-dmg" aria-controls="panel-dmg" aria-selected="false" tabindex="-1" type="button">Download the DMG</button>
-        </div>
-
-        <div class="panel" role="tabpanel" id="panel-terminal" aria-labelledby="tab-terminal">
-          <p>Paste this into Terminal:</p>
+      <div class="install-box">
+        <div class="panel">
+          <p>Open Terminal (Applications → Utilities), paste this line and press Return:</p>
           <div class="cmd">
             <code id="install-cmd"><span class="prompt" aria-hidden="true">$ </span>curl -fsSL https://raw.githubusercontent.com/buemura/audra/main/scripts/install.sh | bash</code>
             <button class="copy" type="button" data-copy="install-cmd">Copy</button>
@@ -251,22 +246,6 @@
             Installs the latest release into Applications and opens it. It checks the download's checksum,
             and macOS won't block the first launch. Run it again to update.
           </p>
-        </div>
-
-        <div class="panel" role="tabpanel" id="panel-dmg" aria-labelledby="tab-dmg" hidden>
-          <ol class="install-steps">
-            <li>
-              <strong>Download the DMG</strong> from the
-              <a href="https://github.com/buemura/audra/releases/latest">latest release</a>, open it and drag Audra to Applications.
-            </li>
-            <li>
-              <strong>Open Audra once.</strong> Audra isn't notarized yet, so macOS blocks the first launch.
-            </li>
-            <li>
-              <strong>Allow it.</strong> Go to System Settings → Privacy &amp; Security, scroll down and click
-              <em>Open Anyway</em>.
-            </li>
-          </ol>
         </div>
       </div>
 
@@ -327,7 +306,6 @@
     </div>
     <nav aria-label="Project links">
       <a href="https://github.com/buemura/audra">Source code</a>
-      <a href="https://github.com/buemura/audra/releases">Releases</a>
       <a href="https://github.com/buemura/audra/issues">Report a problem</a>
     </nav>
   </footer>
