@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Builds an Apple Silicon, ad-hoc-signed "build/Screen Reader.app".
+# Builds an Apple Silicon, ad-hoc-signed "build/Audra.app".
 # xcodebuild (not swift build) is required: it compiles MLX's Metal shaders.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP="build/Screen Reader.app"
+APP="build/Audra.app"
 DERIVED="build/DerivedData"
 PRODUCTS="$DERIVED/Build/Products/Release"
 
-xcodebuild build -scheme ScreenReader -configuration Release \
+xcodebuild build -scheme Audra -configuration Release \
     -destination 'platform=macOS,arch=arm64' -derivedDataPath "$DERIVED" -quiet
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
-cp "$PRODUCTS/ScreenReader" "$APP/Contents/MacOS/ScreenReader"
+cp "$PRODUCTS/Audra" "$APP/Contents/MacOS/Audra"
 cp Support/Info.plist "$APP/Contents/Info.plist"
 
 # Package frameworks: MLX, KokoroSwift, MisakiSwift, eSpeak NG, …

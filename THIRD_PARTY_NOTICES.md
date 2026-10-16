@@ -1,6 +1,6 @@
 # Third-party notices
 
-Screen Reader is licensed under the GNU General Public License v3.0 (see LICENSE), because it
+Audra is licensed under the GNU General Public License v3.0 (see LICENSE), because it
 includes eSpeak NG. It also includes or downloads the following:
 
 | Component | License | Source |

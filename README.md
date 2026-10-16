@@ -1,4 +1,4 @@
-# Screen Reader
+# Audra
 
 A small macOS menu bar app that reads aloud the text you select in any application, with natural-sounding voices that run on your Mac.
 
@@ -20,7 +20,7 @@ A small macOS menu bar app that reads aloud the text you select in any applicati
 
 ## Install
 
-1. Download `ScreenReader-<version>.dmg`, open it, drag **Screen Reader** to Applications.
+1. Download `Audra-<version>.dmg`, open it, drag **Audra** to Applications.
 2. The app is not notarized yet, so macOS blocks the first launch:
    - Open the app once (it will be blocked), then go to System Settings → Privacy & Security, scroll down and click **Open Anyway**.
 3. Grant **Accessibility** access when asked (System Settings → Privacy & Security → Accessibility). It is needed to read other apps' selections.
@@ -43,15 +43,15 @@ The app first asks the Accessibility API for the selection. Some apps (e.g. Chro
 make run                   # build, reset the Accessibility grant and open the app
 make test                  # run all tests (xcodebuild; ONLY=Target/TestClass for a subset)
 swift test --filter ScreenReaderCoreTests   # fast: core logic only
-./scripts/build-app.sh     # build "build/Screen Reader.app" (Apple Silicon, ad-hoc signed)
-./scripts/make-dmg.sh      # build build/ScreenReader-<version>.dmg
-open "build/Screen Reader.app"
+./scripts/build-app.sh     # build "build/Audra.app" (Apple Silicon, ad-hoc signed)
+./scripts/make-dmg.sh      # build build/Audra-<version>.dmg
+open "build/Audra.app"
 ```
 
 After each rebuild, macOS drops the Accessibility grant because the ad-hoc signature changes. Reset it and grant again:
 
 ```bash
-tccutil reset Accessibility com.buemura.ScreenReader
+tccutil reset Accessibility com.buemura.Audra
 ```
 
 Project layout:

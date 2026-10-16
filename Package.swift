@@ -2,10 +2,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "ScreenReader",
+    name: "Audra",
     platforms: [.macOS(.v15)],
     products: [
-        .executable(name: "ScreenReader", targets: ["ScreenReaderApp"]),
+        .executable(name: "Audra", targets: ["ScreenReaderApp"]),
         .library(name: "ScreenReaderCore", targets: ["ScreenReaderCore"]),
     ],
     dependencies: [

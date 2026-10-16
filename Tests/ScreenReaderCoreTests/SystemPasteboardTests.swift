@@ -6,7 +6,7 @@ import XCTest
 final class SystemPasteboardTests: XCTestCase {
     /// A private, uniquely named pasteboard so tests never touch the user's clipboard.
     private func makePasteboard() -> NSPasteboard {
-        let pasteboard = NSPasteboard(name: NSPasteboard.Name("ScreenReaderTests.\(UUID().uuidString)"))
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("AudraTests.\(UUID().uuidString)"))
         addTeardownBlock { pasteboard.releaseGlobally() }
         return pasteboard
     }

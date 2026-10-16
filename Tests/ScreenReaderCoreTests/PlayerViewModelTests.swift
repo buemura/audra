@@ -12,7 +12,7 @@ final class PlayerViewModelTests: XCTestCase {
     private var readSelectionCount = 0
 
     private func makeModel() -> PlayerViewModel {
-        let suiteName = "ScreenReaderTests.\(UUID().uuidString)"
+        let suiteName = "AudraTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         addTeardownBlock { defaults.removePersistentDomain(forName: suiteName) }
 

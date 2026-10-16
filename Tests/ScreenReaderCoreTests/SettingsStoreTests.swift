@@ -4,7 +4,7 @@ import XCTest
 @MainActor
 final class SettingsStoreTests: XCTestCase {
     private func makeDefaults() -> UserDefaults {
-        let suiteName = "ScreenReaderTests.\(UUID().uuidString)"
+        let suiteName = "AudraTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         addTeardownBlock { defaults.removePersistentDomain(forName: suiteName) }
         return defaults

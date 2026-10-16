@@ -124,7 +124,7 @@ final class AppModel: ObservableObject {
 
     private static var modelDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("ScreenReader/Kokoro", isDirectory: true)
+            .appendingPathComponent("Audra/Kokoro", isDirectory: true)
     }
 
     /// System voices, plus the natural voices once their model is downloaded.

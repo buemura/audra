@@ -5,15 +5,15 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Screen Reader</string>
+    <string>Audra</string>
     <key>CFBundleExecutable</key>
-    <string>ScreenReader</string>
+    <string>Audra</string>
     <key>CFBundleIdentifier</key>
-    <string>com.buemura.ScreenReader</string>
+    <string>com.buemura.Audra</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Screen Reader</string>
+    <string>Audra</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

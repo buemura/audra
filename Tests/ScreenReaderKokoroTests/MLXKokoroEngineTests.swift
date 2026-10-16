@@ -6,7 +6,7 @@ import XCTest
 final class MLXKokoroEngineTests: XCTestCase {
     private var modelDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("ScreenReader/Kokoro", isDirectory: true)
+            .appendingPathComponent("Audra/Kokoro", isDirectory: true)
     }
 
     func testMissingModelIsUnavailable() async {

@@ -50,7 +50,7 @@ struct MenuBarContent: View {
             openSettings()
         }
         .keyboardShortcut(",")
-        Button("Quit Screen Reader") { NSApp.terminate(nil) }
+        Button("Quit Audra") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 }

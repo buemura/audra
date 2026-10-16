@@ -18,7 +18,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
     private var noTextCount = 0
 
     private func makeCoordinator(selection: String?, detectedLanguage: String? = nil) -> ReadSelectionCoordinator {
-        let suiteName = "ScreenReaderTests.\(UUID().uuidString)"
+        let suiteName = "AudraTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         addTeardownBlock { defaults.removePersistentDomain(forName: suiteName) }
 

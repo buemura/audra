@@ -19,7 +19,7 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
     private let output: any AudioOutput
     private let phonemizer: @MainActor (KokoroLanguage) -> (any Phonemizer)?
     private var reading: Reading?
-    private let logger = Logger(subsystem: "com.buemura.ScreenReader", category: "Kokoro")
+    private let logger = Logger(subsystem: "com.buemura.Audra", category: "Kokoro")
 
     /// State of one `speak` call. Callbacks check `self.reading === reading` to ignore stale work.
     @MainActor
