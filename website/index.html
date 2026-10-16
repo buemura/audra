@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audra — Hear any text on your Mac</title>
+  <meta name="description" content="Audra is a free macOS menu bar app that reads aloud the text you select in any app, with natural voices that run on your Mac.">
+  <meta property="og:title" content="Audra — Hear any text on your Mac">
+  <meta property="og:description" content="Select text in any app, press ⌥⇧S, and hear it in a natural voice generated on your Mac.">
+  <meta property="og:image" content="assets/icon-256.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/icon-256.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&family=Funnel+Display:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="Audra home">
+      <span class="mark" aria-hidden="true"></span>
+      <span>Audra</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#voices">Voices</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/buemura/audra" class="nav-gh">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Hero: the headline acts out the app, the player is a working copy of Audra's -->
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Free menu bar app for macOS</p>
+        <h1 class="headline">
+          <span class="line">Select <span class="sel">any text.</span></span>
+          <span class="line">Press <kbd class="key">⌥</kbd><kbd class="key">⇧</kbd><kbd class="key">S</kbd></span>
+          <span class="line hear-line">Hear it.</span>
+        </h1>
+        <p class="lede">
+          Audra reads aloud the text you select in any app on your Mac, in a natural voice generated on your Mac.
+          Press the shortcut again to stop.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://github.com/buemura/audra/releases/latest" data-download>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>
+            Download for Mac
+          </a>
+          <a class="btn btn-quiet" href="#install">Install from Terminal</a>
+        </div>
+        <p class="meta">
+          <span data-version>Latest release</span> · macOS 15 Sequoia or later · Apple Silicon · Open source (GPL-3.0)
+        </p>
+      </div>
+
+      <div class="hero-stage">
+        <div class="player-slot" id="player-slot">
+          <div class="player" id="player" role="region" aria-label="Audra player demo">
+            <div class="player-head">
+              <span class="mark mark-grad" aria-hidden="true"></span>
+              <div class="player-id">
+                <strong>Audra</strong>
+                <span id="player-voice">Screen text, naturally spoken.</span>
+              </div>
+              <span class="chip" id="player-lang" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>
+                <span></span>
+              </span>
+            </div>
+            <div class="player-card">
+              <div class="now">
+                <span class="now-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg>
+                </span>
+                <p class="now-text" id="player-text" aria-live="polite">Select any text on this page and press ⌥⇧S. Or press play to hear this sentence.</p>
+              </div>
+              <div class="track" aria-hidden="true"><div class="track-fill" id="player-progress"></div></div>
+              <div class="controls">
+                <button class="pbtn" id="btn-stop" type="button" aria-label="Stop" disabled>
+                  <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                </button>
+                <div class="controls-mid">
+                  <button class="pbtn" id="btn-slower" type="button" aria-label="Slower">
+                    <svg viewBox="0 0 24 24"><path d="M11 6v12L3 12zM21 6v12l-8-6z"/></svg>
+                  </button>
+                  <button class="play" id="btn-play" type="button" aria-label="Play">
+                    <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>
+                    <svg class="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>
+                  </button>
+                  <button class="pbtn" id="btn-faster" type="button" aria-label="Faster">
+                    <svg viewBox="0 0 24 24"><path d="M3 6v12l8-6zM13 6v12l8-6z"/></svg>
+                  </button>
+                </div>
+                <label class="speed">
+                  <span class="sr">Speed</span>
+                  <select id="speed">
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                    <option value="2.5">2.5x</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">
+          This player works. It reads with your browser's voice; Audra uses the natural voices on your Mac.
+        </p>
+      </div>
+    </section>
+
+    <!-- How it works: a real three-step sequence -->
+    <section class="section" id="how" aria-labelledby="how-title">
+      <h2 id="how-title">Three steps, in any app</h2>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-scene" aria-hidden="true">
+            <p class="scene-text">The meeting moved to <span class="scene-sel">Thursday at 3 pm, in the big room</span> upstairs.</p>
+          </div>
+          <h3><span class="step-n">1</span>Select text</h3>
+          <p>In Safari, Mail, Pages, a PDF, Slack, VS Code — anywhere you can highlight words.</p>
+        </li>
+        <li class="step">
+          <div class="step-scene" aria-hidden="true">
+            <span class="keys"><kbd class="key">⌥</kbd><kbd class="key">⇧</kbd><kbd class="key">S</kbd></span>
+          </div>
+          <h3><span class="step-n">2</span>Press <span class="nowrap">⌥⇧S</span></h3>
+          <p>Or choose Read Selection from the menu bar icon. You can set your own shortcut in Settings.</p>
+        </li>
+        <li class="step">
+          <div class="step-scene" aria-hidden="true">
+            <span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <h3><span class="step-n">3</span>Listen</h3>
+          <p>Audra detects the language and picks a matching voice. Press the shortcut again to stop.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- The floating player -->
+    <section class="section split" aria-labelledby="player-title">
+      <div>
+        <h2 id="player-title">A player that stays out of your way</h2>
+        <p class="section-lede">
+          While Audra reads, a small player floats above your other windows. It hides itself a few seconds
+          after reading stops.
+        </p>
+      </div>
+      <dl class="facts">
+        <div>
+          <dt>Pause, stop, change speed</dt>
+          <dd>Play and pause, slow down, speed up, or stop, from the player or the menu bar.</dd>
+        </div>
+        <div>
+          <dt>Five speeds</dt>
+          <dd class="speeds" aria-label="Speeds">
+            <button type="button" data-speed="0.5">0.5x</button>
+            <button type="button" data-speed="1">1x</button>
+            <button type="button" data-speed="1.5">1.5x</button>
+            <button type="button" data-speed="2">2x</button>
+            <button type="button" data-speed="2.5">2.5x</button>
+          </dd>
+        </div>
+        <div>
+          <dt>Put it where you want it</dt>
+          <dd>Drag it anywhere and resize it from the corner. It remembers its spot.</dd>
+        </div>
+        <div>
+          <dt>Keep it on screen</dt>
+          <dd>Turn on <em>Show Player Always</em> in the menu bar to keep it visible between readings.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- Voices -->
+    <section class="section" id="voices" aria-labelledby="voices-title">
+      <div class="section-head">
+        <h2 id="voices-title">Natural voices in 8 languages</h2>
+        <p class="section-lede">
+          51 neural voices from Kokoro, generated on your Mac. For other languages, Audra uses the voices
+          installed on your Mac. You can pick a different voice for each language.
+        </p>
+      </div>
+      <table class="voices">
+        <thead>
+          <tr><th scope="col">Language</th><th scope="col">Default voice</th><th scope="col">Sample</th><th scope="col"><span class="sr">Play</span></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>English (US)</td><td>Heart <span class="count">+18</span></td><td class="sample" lang="en-US">Reading gets easier when you can listen too.</td><td><button class="hear" type="button" aria-label="Hear the English (US) sample">▶</button></td></tr>
+          <tr><td>English (UK)</td><td>Emma <span class="count">+7</span></td><td class="sample" lang="en-GB">Put the kettle on, I'll read you the rest.</td><td><button class="hear" type="button" aria-label="Hear the English (UK) sample">▶</button></td></tr>
+          <tr><td>Portuguese (Brazil)</td><td>Dora <span class="count">+1</span></td><td class="sample" lang="pt-BR">Selecione o texto e ouça em voz alta.</td><td><button class="hear" type="button" aria-label="Hear the Portuguese sample">▶</button></td></tr>
+          <tr><td>Spanish</td><td>Dora <span class="count">+1</span></td><td class="sample" lang="es-ES">Selecciona el texto y escúchalo en voz alta.</td><td><button class="hear" type="button" aria-label="Hear the Spanish sample">▶</button></td></tr>
+          <tr><td>French</td><td>Siwis</td><td class="sample" lang="fr-FR">Sélectionnez le texte et écoutez-le.</td><td><button class="hear" type="button" aria-label="Hear the French sample">▶</button></td></tr>
+          <tr><td>Italian</td><td>Sara <span class="count">+1</span></td><td class="sample" lang="it-IT">Seleziona il testo e ascoltalo ad alta voce.</td><td><button class="hear" type="button" aria-label="Hear the Italian sample">▶</button></td></tr>
+          <tr><td>Hindi</td><td>Alpha <span class="count">+3</span></td><td class="sample" lang="hi-IN">टेक्स्ट चुनें और उसे सुनें।</td><td><button class="hear" type="button" aria-label="Hear the Hindi sample">▶</button></td></tr>
+          <tr><td>Japanese</td><td>Alpha <span class="count">+4</span></td><td class="sample" lang="ja-JP">テキストを選んで、声で聞きましょう。</td><td><button class="hear" type="button" aria-label="Hear the Japanese sample">▶</button></td></tr>
+          <tr><td>Chinese <span class="beta">beta</span></td><td>Xiaobei <span class="count">+7</span></td><td class="sample" lang="zh-CN">选中文字，听它朗读。</td><td><button class="hear" type="button" aria-label="Hear the Chinese sample">▶</button></td></tr>
+        </tbody>
+      </table>
+      <p class="fine">Samples play in your browser's voice. In Audra they're read by the natural voice listed.</p>
+    </section>
+
+    <!-- Privacy -->
+    <section class="privacy" id="privacy" aria-labelledby="privacy-title">
+      <div class="privacy-inner">
+        <h2 id="privacy-title">What you read stays on your&nbsp;Mac.</h2>
+        <dl class="facts facts-dark">
+          <div>
+            <dt>Nothing is stored or sent</dt>
+            <dd>Audra never saves the text it reads and never sends it anywhere. Speech is generated on your Mac.</dd>
+          </div>
+          <div>
+            <dt>One download, once</dt>
+            <dd>The only time Audra goes online is to download the natural voice model (about 190 MB) the first time it opens.</dd>
+          </div>
+          <div>
+            <dt>Your clipboard comes back</dt>
+            <dd>Some apps, like Chrome and Electron apps, don't share what's selected. For those, Audra copies the selection and then puts your previous clipboard back right away.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section class="section" id="install" aria-labelledby="install-title">
+      <div class="section-head">
+        <h2 id="install-title">Install Audra</h2>
+        <p class="section-lede">Requires macOS 15 Sequoia or later on a Mac with Apple Silicon.</p>
+      </div>
+
+      <div class="tabs">
+        <div class="tablist" role="tablist" aria-label="Install method">
+          <button role="tab" id="tab-terminal" aria-controls="panel-terminal" aria-selected="true" type="button">Terminal <span class="tab-tag">recommended</span></button>
+          <button role="tab" id="tab-dmg" aria-controls="panel-dmg" aria-selected="false" tabindex="-1" type="button">Download the DMG</button>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-terminal" aria-labelledby="tab-terminal">
+          <p>Paste this into Terminal:</p>
+          <div class="cmd">
+            <code id="install-cmd"><span class="prompt" aria-hidden="true">$ </span>curl -fsSL https://raw.githubusercontent.com/buemura/audra/main/scripts/install.sh | bash</code>
+            <button class="copy" type="button" data-copy="install-cmd">Copy</button>
+          </div>
+          <p class="panel-note">
+            Installs the latest release into Applications and opens it. It checks the download's checksum,
+            and macOS won't block the first launch. Run it again to update.
+          </p>
+        </div>
+
+        <div class="panel" role="tabpanel" id="panel-dmg" aria-labelledby="tab-dmg" hidden>
+          <ol class="install-steps">
+            <li>
+              <strong>Download the DMG</strong> from the
+              <a href="https://github.com/buemura/audra/releases/latest">latest release</a>, open it and drag Audra to Applications.
+            </li>
+            <li>
+              <strong>Open Audra once.</strong> Audra isn't notarized yet, so macOS blocks the first launch.
+            </li>
+            <li>
+              <strong>Allow it.</strong> Go to System Settings → Privacy &amp; Security, scroll down and click
+              <em>Open Anyway</em>.
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="last-step">
+        <span class="last-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5c4.5 1.2 9.5 1.2 14 0M12 10v4.5m0 0-3 6m3-6 3 6"/></svg>
+        </span>
+        <div>
+          <h3>Then grant Accessibility access</h3>
+          <p>
+            Audra asks for it when it first opens. It needs this to read what you've selected in other apps.
+            You'll find it in System Settings → Privacy &amp; Security → Accessibility.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Reading stopped working after an update</summary>
+          <p>macOS sometimes drops the Accessibility permission when the app changes. Reset it in Terminal, then open Audra and grant access again:</p>
+          <div class="cmd cmd-sm">
+            <code id="reset-cmd">tccutil reset Accessibility com.buemura.Audra</code>
+            <button class="copy" type="button" data-copy="reset-cmd">Copy</button>
+          </div>
+        </details>
+        <details>
+          <summary>Does it work in Chrome, Slack or VS Code?</summary>
+          <p>Yes. These apps don't share their selection with macOS, so Audra presses ⌘C, reads the copied text and then restores your clipboard. Clipboard-history tools may still record that copy.</p>
+        </details>
+        <details>
+          <summary>How do I change the shortcut or the voice?</summary>
+          <p>Click the Audra icon in the menu bar and choose Settings…. You can set the shortcut, the speed and a voice for each language there.</p>
+        </details>
+        <details>
+          <summary>How much disk space do the voices use?</summary>
+          <p>About 190 MB. Download progress shows in the menu bar menu and in Settings → General. To free the space, click Remove next to Natural voices in Settings → General. Audra then uses your Mac's voices.</p>
+        </details>
+        <details>
+          <summary>Can I get better voices for other languages?</summary>
+          <p>Yes. Download Enhanced or Premium voices in System Settings → Accessibility → Spoken Content → System Voice → Manage Voices. Audra uses them for languages its natural voices don't cover.</p>
+        </details>
+        <details>
+          <summary>Is there a Windows or Linux version?</summary>
+          <p>Not yet. Windows and Linux versions are on the roadmap, along with a notarized Mac build.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-brand">
+      <span class="mark" aria-hidden="true"></span>
+      <p>Audra is free software, licensed under GPL-3.0. Natural voices by <a href="https://huggingface.co/hexgrad/Kokoro-82M">Kokoro-82M</a>, running on <a href="https://github.com/ml-explore/mlx-swift">MLX</a>.</p>
+    </div>
+    <nav aria-label="Project links">
+      <a href="https://github.com/buemura/audra">Source code</a>
+      <a href="https://github.com/buemura/audra/releases">Releases</a>
+      <a href="https://github.com/buemura/audra/issues">Report a problem</a>
+    </nav>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
