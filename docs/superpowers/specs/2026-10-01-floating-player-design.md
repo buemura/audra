@@ -1,4 +1,4 @@
-# Screen Reader — Floating Player Design
+# Audra — Floating Player Design
 
 Adds a small always-on-top player widget so reading can be controlled without the hotkey or menu bar. Builds on `2026-10-01-screen-reader-design.md`.
 
@@ -6,7 +6,7 @@ Adds a small always-on-top player widget so reading can be controlled without th
 
 | Topic | Decision |
 |---|---|
-| Window | AppKit `NSPanel`, style `.nonactivatingPanel` + `.borderless`, level `.floating`, collection behavior `.canJoinAllSpaces` + `.fullScreenAuxiliary`, `hidesOnDeactivate = false`, `becomesKeyOnlyIfNeeded = true`. Hosts a SwiftUI view via `NSHostingView`. Non-activating is required: clicking the panel must not make Screen Reader frontmost, otherwise "read current selection" would read our own window. |
+| Window | AppKit `NSPanel`, style `.nonactivatingPanel` + `.borderless`, level `.floating`, collection behavior `.canJoinAllSpaces` + `.fullScreenAuxiliary`, `hidesOnDeactivate = false`, `becomesKeyOnlyIfNeeded = true`. Hosts a SwiftUI view via `NSHostingView`. Non-activating is required: clicking the panel must not make Audra frontmost, otherwise "read current selection" would read our own window. |
 | Visibility | Shown when speech state leaves `.idle`. Hidden 3 s after it returns to `.idle` (cancelled if reading starts again in that window). Menu bar toggle **Show Player Always** (persisted) keeps it visible while idle. Show/hide fades (~0.2 s). |
 | Position | Draggable by its background (a background `NSView` that calls `window.performDrag(with:)`, since `NSHostingView` blocks `isMovableByWindowBackground`). Position persisted with `setFrameAutosaveName`. First launch: bottom-right of the main screen's visible frame, 24 pt inset. A restored frame is reset to the current size, and moved back to the default position if it is off every screen. |
 | Look | ~240×120 pt card, corner radius 20 pt, solid grey that adapts to light/dark (no glass/blur), soft shadow. SF Symbols for all icons. |

@@ -1,4 +1,4 @@
-# Screen Reader v1 Implementation Plan
+# Audra v1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -18,7 +18,7 @@
 - The only third-party dependency is `KeyboardShortcuts` (`from: "2.0.0"`), used by the **app target only**. `ScreenReaderCore` has no third-party dependencies.
 - Speeds are exactly: `0.5x, 1x, 1.5x, 2x, 2.5x`.
 - Default hotkey: **⌥⇧S** (Option-Shift-S).
-- App name `Screen Reader`; executable `ScreenReader`; bundle id `com.buemura.ScreenReader`; version `0.1.0`.
+- App name `Audra`; executable `Audra`; bundle id `com.buemura.Audra`; version `0.1.0`.
 - Privacy: never `print`, log, persist or transmit selected text. No networking code anywhere.
 - The ⌘C fallback must restore the user's previous clipboard contents.
 - UI-facing types and all protocols in Core are `@MainActor`, except `LanguageDetecting`.
@@ -30,8 +30,8 @@
 Package.swift                                   # SwiftPM manifest (Task 1, rewritten in Task 8)
 .gitignore                                      # Task 1
 Support/Info.plist                              # App bundle metadata (Task 8)
-scripts/build-app.sh                            # Builds "build/Screen Reader.app" (Task 8)
-scripts/make-dmg.sh                             # Builds build/ScreenReader-<ver>.dmg (Task 10)
+scripts/build-app.sh                            # Builds "build/Audra.app" (Task 8)
+scripts/make-dmg.sh                             # Builds build/Audra-<ver>.dmg (Task 10)
 Sources/ScreenReaderCore/
   Speech/SpeechSpeed.swift                      # Speed options → AVSpeech rate (Task 1)
   Speech/SpeechSynthesizing.swift               # Synthesizer protocol (Task 5)
@@ -96,7 +96,7 @@ Steps marked **(human)** need a person at the Mac (GUI, permissions, listening).
 import PackageDescription
 
 let package = Package(
-    name: "ScreenReader",
+    name: "Audra",
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "ScreenReaderCore", targets: ["ScreenReaderCore"]),
@@ -554,7 +554,7 @@ import XCTest
 @MainActor
 final class SettingsStoreTests: XCTestCase {
     private func makeDefaults() -> UserDefaults {
-        let suiteName = "ScreenReaderTests.\(UUID().uuidString)"
+        let suiteName = "AudraTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         addTeardownBlock { defaults.removePersistentDomain(forName: suiteName) }
         return defaults
@@ -1226,7 +1226,7 @@ import XCTest
 final class SystemPasteboardTests: XCTestCase {
     /// A private, uniquely named pasteboard so tests never touch the user's clipboard.
     private func makePasteboard() -> NSPasteboard {
-        let pasteboard = NSPasteboard(name: NSPasteboard.Name("ScreenReaderTests.\(UUID().uuidString)"))
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("AudraTests.\(UUID().uuidString)"))
         addTeardownBlock { pasteboard.releaseGlobally() }
         return pasteboard
     }
@@ -1483,7 +1483,7 @@ final class ReadSelectionCoordinatorTests: XCTestCase {
     private var noTextCount = 0
 
     private func makeCoordinator(selection: String?, detectedLanguage: String? = nil) -> ReadSelectionCoordinator {
-        let suiteName = "ScreenReaderTests.\(UUID().uuidString)"
+        let suiteName = "AudraTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         addTeardownBlock { defaults.removePersistentDomain(forName: suiteName) }
 
@@ -1706,7 +1706,7 @@ git commit -m "feat: add coordinator that reads the selection aloud"
   - `extension KeyboardShortcuts.Name { static let readSelection }`
   - `@MainActor final class AppModel: ObservableObject` with `let settings: SettingsStore`, `let speech: SpeechController`, `@Published private(set) var hasAccessibilityPermission: Bool`, `func toggleReading() async`, `func readSelection() async`.
   - `enum AccessibilityPermission { static var isGranted: Bool; static func request(); static func openSystemSettings() }`
-  - `scripts/build-app.sh` → `build/Screen Reader.app`.
+  - `scripts/build-app.sh` → `build/Audra.app`.
 
 This task is UI glue with no unit tests; correctness is checked by `swift build`, `swift test` (to confirm nothing regressed) and the manual checklist.
 
@@ -1718,10 +1718,10 @@ Replace `Package.swift` with:
 import PackageDescription
 
 let package = Package(
-    name: "ScreenReader",
+    name: "Audra",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "ScreenReader", targets: ["ScreenReaderApp"]),
+        .executable(name: "Audra", targets: ["ScreenReaderApp"]),
         .library(name: "ScreenReaderCore", targets: ["ScreenReaderCore"]),
     ],
     dependencies: [
@@ -1738,7 +1738,7 @@ let package = Package(
 )
 ```
 
-The executable product is named `ScreenReader`, so the built binary is `ScreenReader`.
+The executable product is named `Audra`, so the built binary is `Audra`.
 
 - [ ] **Step 2: Hotkey name and permission helper**
 
@@ -1899,7 +1899,7 @@ struct MenuBarContent: View {
 
         Divider()
 
-        Button("Quit Screen Reader") { NSApp.terminate(nil) }
+        Button("Quit Audra") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 }
@@ -1939,15 +1939,15 @@ Expected: dependency `KeyboardShortcuts` resolves, build succeeds, all tests PAS
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Screen Reader</string>
+    <string>Audra</string>
     <key>CFBundleExecutable</key>
-    <string>ScreenReader</string>
+    <string>Audra</string>
     <key>CFBundleIdentifier</key>
-    <string>com.buemura.ScreenReader</string>
+    <string>com.buemura.Audra</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Screen Reader</string>
+    <string>Audra</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -1967,11 +1967,11 @@ Expected: dependency `KeyboardShortcuts` resolves, build succeeds, all tests PAS
 `scripts/build-app.sh`:
 ```bash
 #!/usr/bin/env bash
-# Builds a universal, ad-hoc-signed "build/Screen Reader.app".
+# Builds a universal, ad-hoc-signed "build/Audra.app".
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP="build/Screen Reader.app"
+APP="build/Audra.app"
 BUILD_FLAGS=(-c release --arch arm64 --arch x86_64)
 
 swift build "${BUILD_FLAGS[@]}"
@@ -1979,7 +1979,7 @@ BIN_DIR="$(swift build "${BUILD_FLAGS[@]}" --show-bin-path)"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN_DIR/ScreenReader" "$APP/Contents/MacOS/ScreenReader"
+cp "$BIN_DIR/Audra" "$APP/Contents/MacOS/Audra"
 cp Support/Info.plist "$APP/Contents/Info.plist"
 
 # SwiftPM resource bundles (e.g. KeyboardShortcuts' localizations) must ship inside the app.
@@ -1990,14 +1990,14 @@ echo "Built $APP"
 ```
 
 Run: `chmod +x scripts/build-app.sh && ./scripts/build-app.sh`
-Expected: ends with `Built build/Screen Reader.app`.
+Expected: ends with `Built build/Audra.app`.
 
-Run: `lipo -archs "build/Screen Reader.app/Contents/MacOS/ScreenReader" && codesign --verify --verbose "build/Screen Reader.app"`
+Run: `lipo -archs "build/Audra.app/Contents/MacOS/Audra" && codesign --verify --verbose "build/Audra.app"`
 Expected: `x86_64 arm64` (either order), then `valid on disk` and `satisfies its Designated Requirement`.
 
 - [ ] **Step 7: Manual check (human)**
 
-Run `open "build/Screen Reader.app"`, then:
+Run `open "build/Audra.app"`, then:
 1. No Dock icon appears; a speaker icon appears in the menu bar.
 2. macOS shows the Accessibility prompt. Grant it in System Settings → Privacy & Security → Accessibility. Within ~2 s the "⚠️ Grant Accessibility Access…" menu item disappears.
 3. TextEdit: select a sentence, press ⌥⇧S → it is read aloud and the menu bar icon is filled. Press ⌥⇧S again → it stops.
@@ -2006,7 +2006,7 @@ Run `open "build/Screen Reader.app"`, then:
 6. With nothing selected, press ⌥⇧S → system beep, no speech.
 7. Select Portuguese (or another installed language) text → read with a voice for that language.
 
-Note: after every rebuild the ad-hoc signature changes and macOS silently drops the Accessibility grant. Fix with `tccutil reset Accessibility com.buemura.ScreenReader` and grant again.
+Note: after every rebuild the ad-hoc signature changes and macOS silently drops the Accessibility grant. Fix with `tccutil reset Accessibility com.buemura.Audra` and grant again.
 
 - [ ] **Step 8: Commit**
 
@@ -2260,7 +2260,7 @@ and replace:
 ```swift
         Divider()
 
-        Button("Quit Screen Reader") { NSApp.terminate(nil) }
+        Button("Quit Audra") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
 ```
 with:
@@ -2273,18 +2273,18 @@ with:
             openSettings()
         }
         .keyboardShortcut(",")
-        Button("Quit Screen Reader") { NSApp.terminate(nil) }
+        Button("Quit Audra") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
 ```
 
 - [ ] **Step 8: Build, test, bundle**
 
 Run: `swift build && swift test && ./scripts/build-app.sh`
-Expected: all tests PASS; ends with `Built build/Screen Reader.app`.
+Expected: all tests PASS; ends with `Built build/Audra.app`.
 
 - [ ] **Step 9: Manual check (human)**
 
-`tccutil reset Accessibility com.buemura.ScreenReader`, then `open "build/Screen Reader.app"` and grant Accessibility again.
+`tccutil reset Accessibility com.buemura.Audra`, then `open "build/Audra.app"` and grant Accessibility again.
 1. Menu → Settings… opens a window in front of other apps.
 2. General: record a new shortcut (e.g. ⌃⌥R); the old ⌥⇧S stops working and the new one reads/stops. Restore ⌥⇧S.
 3. Speed picker matches the menu bar Speed submenu (changing one updates the other).
@@ -2311,14 +2311,14 @@ git commit -m "feat: add settings window for hotkey, speed and voices"
 
 **Interfaces:**
 - Consumes: `scripts/build-app.sh` and `Support/Info.plist` (Task 8).
-- Produces: `scripts/make-dmg.sh` → `build/ScreenReader-<CFBundleShortVersionString>.dmg`.
+- Produces: `scripts/make-dmg.sh` → `build/Audra-<CFBundleShortVersionString>.dmg`.
 
 - [ ] **Step 1: DMG script**
 
 `scripts/make-dmg.sh`:
 ```bash
 #!/usr/bin/env bash
-# Builds the app and packages it as build/ScreenReader-<version>.dmg with an Applications shortcut.
+# Builds the app and packages it as build/Audra-<version>.dmg with an Applications shortcut.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -2326,26 +2326,26 @@ cd "$(dirname "$0")/.."
 
 VERSION="$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Support/Info.plist)"
 STAGING="build/dmg"
-DMG="build/ScreenReader-$VERSION.dmg"
+DMG="build/Audra-$VERSION.dmg"
 
 rm -rf "$STAGING" "$DMG"
 mkdir -p "$STAGING"
-cp -R "build/Screen Reader.app" "$STAGING/"
+cp -R "build/Audra.app" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
-hdiutil create -volname "Screen Reader" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+hdiutil create -volname "Audra" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
 rm -rf "$STAGING"
 echo "Created $DMG"
 ```
 
 Run: `chmod +x scripts/make-dmg.sh && ./scripts/make-dmg.sh`
-Expected: ends with `Created build/ScreenReader-0.1.0.dmg`.
+Expected: ends with `Created build/Audra-0.1.0.dmg`.
 
-Run: `hdiutil verify build/ScreenReader-0.1.0.dmg`
-Expected: `checksum of "build/ScreenReader-0.1.0.dmg" is VALID`.
+Run: `hdiutil verify build/Audra-0.1.0.dmg`
+Expected: `checksum of "build/Audra-0.1.0.dmg" is VALID`.
 
 - [ ] **Step 2: Confirm resource bundles were copied**
 
-Run: `ls "build/Screen Reader.app/Contents/Resources"`
+Run: `ls "build/Audra.app/Contents/Resources"`
 Expected: a `KeyboardShortcuts_KeyboardShortcuts.bundle` directory.
 
 - [ ] **Step 3: Release check — app must not depend on `.build/` (human)**
@@ -2354,7 +2354,7 @@ SwiftPM's `Bundle.module` falls back to an absolute `.build/` path, which hides 
 
 ```bash
 mv .build .build.bak
-open "build/Screen Reader.app"
+open "build/Audra.app"
 ```
 Open Menu → Settings… (the shortcut recorder loads KeyboardShortcuts' resources). Expected: the window opens and the recorder shows its placeholder text.
 If the app crashes instead (Console.app shows `could not load resource bundle`), stop and report it with the log line — do not move bundles to the app root or `Contents/MacOS`, both break code signing.
@@ -2364,7 +2364,7 @@ Then quit the app and restore: `mv .build.bak .build`.
 
 Replace `README.md` with:
 ````markdown
-# Screen Reader
+# Audra
 
 A small macOS menu bar app that reads aloud the text you select in any application — fully offline.
 
@@ -2385,7 +2385,7 @@ A small macOS menu bar app that reads aloud the text you select in any applicati
 
 ## Install
 
-1. Download `ScreenReader-<version>.dmg`, open it, drag **Screen Reader** to Applications.
+1. Download `Audra-<version>.dmg`, open it, drag **Audra** to Applications.
 2. The app is not notarized yet, so the first time: right-click the app → **Open** → **Open**.
 3. Grant **Accessibility** access when asked (System Settings → Privacy & Security → Accessibility). It is needed to read other apps' selections.
 
@@ -2403,15 +2403,15 @@ The app first asks the Accessibility API for the selection. Some apps (e.g. Chro
 
 ```bash
 swift test                 # run unit tests
-./scripts/build-app.sh     # build "build/Screen Reader.app" (universal, ad-hoc signed)
-./scripts/make-dmg.sh      # build build/ScreenReader-<version>.dmg
-open "build/Screen Reader.app"
+./scripts/build-app.sh     # build "build/Audra.app" (universal, ad-hoc signed)
+./scripts/make-dmg.sh      # build build/Audra-<version>.dmg
+open "build/Audra.app"
 ```
 
 After each rebuild, macOS drops the Accessibility grant because the ad-hoc signature changes. Reset it and grant again:
 
 ```bash
-tccutil reset Accessibility com.buemura.ScreenReader
+tccutil reset Accessibility com.buemura.Audra
 ```
 
 Project layout:

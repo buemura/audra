@@ -4,7 +4,7 @@
 
 **Goal:** Add a small always-on-top player widget (play/pause, slower, faster, stop, text snippet, speed and voice) that controls reading without the hotkey or menu bar.
 
-**Architecture:** All button logic, labels and visibility rules live in a new `PlayerViewModel` in `ScreenReaderCore`, built on the existing `SpeechController` and `SettingsStore`, and unit-tested with the existing `FakeSynthesizer`. The app target adds a thin SwiftUI `PlayerView` and a `PlayerPanelController` that owns a non-activating, floating `NSPanel`. Non-activating matters: clicking the panel must not make Screen Reader the frontmost app, or "read current selection" would read our own window. Speed changes reuse the existing `settings.$speed` → `SpeechController.changeRate` subscription in `ReadSelectionCoordinator`.
+**Architecture:** All button logic, labels and visibility rules live in a new `PlayerViewModel` in `ScreenReaderCore`, built on the existing `SpeechController` and `SettingsStore`, and unit-tested with the existing `FakeSynthesizer`. The app target adds a thin SwiftUI `PlayerView` and a `PlayerPanelController` that owns a non-activating, floating `NSPanel`. Non-activating matters: clicking the panel must not make Audra the frontmost app, or "read current selection" would read our own window. Speed changes reuse the existing `settings.$speed` → `SpeechController.changeRate` subscription in `ReadSelectionCoordinator`.
 
 **Tech Stack:** Swift (tools 5.10, Swift 5 language mode), SwiftUI, AppKit (`NSPanel`, `NSHostingView`), Combine, XCTest.
 
@@ -331,7 +331,7 @@ final class PlayerViewModelTests: XCTestCase {
     private var readSelectionCount = 0
 
     private func makeModel() -> PlayerViewModel {
-        let suiteName = "ScreenReaderTests.\(UUID().uuidString)"
+        let suiteName = "AudraTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         addTeardownBlock { defaults.removePersistentDomain(forName: suiteName) }
 
@@ -882,7 +882,7 @@ Expected: the build succeeds with no new warnings in `Player/`, and all tests pa
 
 Run:
 ```bash
-./scripts/build-app.sh && tccutil reset Accessibility com.buemura.ScreenReader; open "build/Screen Reader.app"
+./scripts/build-app.sh && tccutil reset Accessibility com.buemura.Audra; open "build/Audra.app"
 ```
 Grant Accessibility when prompted. Then:
 1. Select text in TextEdit and press ⌥⇧S. The player fades in at the bottom-right with the text snippet and `1x · <voice>`. Speech starts.
@@ -941,7 +941,7 @@ You can also control reading from the floating player: ▶ reads the current sel
 
 Run:
 ```bash
-swift test && ./scripts/build-app.sh && tccutil reset Accessibility com.buemura.ScreenReader; open "build/Screen Reader.app"
+swift test && ./scripts/build-app.sh && tccutil reset Accessibility com.buemura.Audra; open "build/Audra.app"
 ```
 Expected: all tests pass and the app launches. Grant Accessibility, then go through every check in the spec (`docs/superpowers/specs/2026-10-01-floating-player-design.md` → Testing → Manual checks):
 

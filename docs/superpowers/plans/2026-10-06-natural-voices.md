@@ -22,7 +22,7 @@
 - Kokoro input limit: 510 phonemes, counted in **Unicode scalars**.
 - Look-ahead: at most 3 sentence buffers queued (the one playing + 2 ahead).
 - The model is unloaded after 600 seconds without Kokoro speech.
-- Model files go in `~/Library/Application Support/ScreenReader/Kokoro/`.
+- Model files go in `~/Library/Application Support/Audra/Kokoro/`.
 - Model assets (release `kokoro-model-v1` on the **public** repo `buemura/screen-reader-models`):
   - `kokoro-v1_0-fp16.safetensors`: 163587908 bytes, sha256 `67d4b879ce0f0bc6d30169cca8dc424f192cbed5be811078d8ef7c4a34a34b1f`
   - `voices.npz`: 26645914 bytes, sha256 `9555acb689b3856bb58215b42e0ce65bcc228e1b6286df9c7d92d205e795d3dc`
@@ -2419,7 +2419,7 @@ public final class KokoroSynthesizer: FallibleSpeechSynthesizing {
     private let output: any AudioOutput
     private let phonemizer: @MainActor (KokoroLanguage) -> (any Phonemizer)?
     private var reading: Reading?
-    private let logger = Logger(subsystem: "com.buemura.ScreenReader", category: "Kokoro")
+    private let logger = Logger(subsystem: "com.buemura.Audra", category: "Kokoro")
 
     /// State of one `speak` call. Callbacks check `self.reading === reading` to ignore stale work.
     @MainActor
@@ -3298,7 +3298,7 @@ with:
 
 ```swift
   /// Generates audio for text already converted to Kokoro phonemes, skipping G2P.
-  /// (Screen Reader patch: the app phonemizes non-English languages itself.)
+  /// (Audra patch: the app phonemizes non-English languages itself.)
   public func generateAudio(voice: MLXArray, phonemes: String, speed: Float = 1.0) throws -> [Float] {
     phonemeInput = phonemes
     defer { phonemeInput = nil }
@@ -3339,7 +3339,7 @@ In `Packages/KokoroSwift/Sources/KokoroSwift/TextProcessing/Tokenizer.swift`, re
 with:
 
 ```swift
-    // One token per Unicode scalar, like Kokoro's Python tokenizer. (Screen Reader patch: mapping
+    // One token per Unicode scalar, like Kokoro's Python tokenizer. (Audra patch: mapping
     // Characters looked up clusters such as "ɐ̃" — vowel + combining tilde — which aren't in the
     // vocabulary, silently dropping Portuguese and French nasal vowels.)
     return text.unicodeScalars.compactMap { vocab[String($0)] }
@@ -3425,10 +3425,10 @@ Replace `Package.swift` with:
 import PackageDescription
 
 let package = Package(
-    name: "ScreenReader",
+    name: "Audra",
     platforms: [.macOS(.v15)],
     products: [
-        .executable(name: "ScreenReader", targets: ["ScreenReaderApp"]),
+        .executable(name: "Audra", targets: ["ScreenReaderApp"]),
         .library(name: "ScreenReaderCore", targets: ["ScreenReaderCore"]),
     ],
     dependencies: [
@@ -3466,14 +3466,14 @@ let package = Package(
 )
 ```
 
-In `Makefile`, change the `build` comment to `## Build "build/Screen Reader.app" (Apple Silicon, ad-hoc signed)` and replace the `test` recipe with:
+In `Makefile`, change the `build` comment to `## Build "build/Audra.app" (Apple Silicon, ad-hoc signed)` and replace the `test` recipe with:
 
 ```make
 ## Run all tests with xcodebuild (MLX needs the Metal toolchain). ONLY=Target/TestClass runs a subset.
 ## The bundle path lets package resources (Misaki dictionaries, Kokoro config) load outside an app.
 test:
 	TEST_RUNNER_PACKAGE_RESOURCE_BUNDLE_PATH="$(CURDIR)/build/DerivedData/Build/Products/Debug" \
-	xcodebuild test -scheme ScreenReader-Package -destination 'platform=macOS,arch=arm64' \
+	xcodebuild test -scheme Audra-Package -destination 'platform=macOS,arch=arm64' \
 		-derivedDataPath build/DerivedData -quiet $(if $(ONLY),-only-testing:$(ONLY))
 ```
 
@@ -3650,21 +3650,21 @@ Replace `scripts/build-app.sh` with:
 
 ```bash
 #!/usr/bin/env bash
-# Builds an Apple Silicon, ad-hoc-signed "build/Screen Reader.app".
+# Builds an Apple Silicon, ad-hoc-signed "build/Audra.app".
 # xcodebuild (not swift build) is required: it compiles MLX's Metal shaders.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP="build/Screen Reader.app"
+APP="build/Audra.app"
 DERIVED="build/DerivedData"
 PRODUCTS="$DERIVED/Build/Products/Release"
 
-xcodebuild build -scheme ScreenReader -configuration Release \
+xcodebuild build -scheme Audra -configuration Release \
     -destination 'platform=macOS,arch=arm64' -derivedDataPath "$DERIVED" -quiet
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
-cp "$PRODUCTS/ScreenReader" "$APP/Contents/MacOS/ScreenReader"
+cp "$PRODUCTS/Audra" "$APP/Contents/MacOS/Audra"
 cp Support/Info.plist "$APP/Contents/Info.plist"
 
 # Package frameworks: MLX, KokoroSwift, MisakiSwift, eSpeak NG, …
@@ -3680,7 +3680,7 @@ In `Support/Info.plist`, change `LSMinimumSystemVersion` from `14.0` to `15.0`.
 
 - [ ] **Step 11: Verify everything builds and passes**
 
-Run: `make test 2>&1 | tail -5`, then `./scripts/build-app.sh && ls "build/Screen Reader.app/Contents/Frameworks"`
+Run: `make test 2>&1 | tail -5`, then `./scripts/build-app.sh && ls "build/Audra.app/Contents/Frameworks"`
 Expected: tests pass (all Core tests plus `ESpeakPhonemizerTests`); the app builds; `Frameworks` lists `Cmlx.framework`, `ESpeakNG.framework`, `KokoroSwift.framework`, `MLX.framework` and `MisakiSwift.framework`, among others.
 
 - [ ] **Step 12: Commit**
@@ -3828,21 +3828,21 @@ This creates a **public** GitHub repository and uploads 190 MB to it. Ask the us
 ```bash
 REPO_DIR="$(mktemp -d)"
 cat > "$REPO_DIR/README.md" <<'EOF'
-# Screen Reader models
+# Audra models
 
-Model files downloaded by the Screen Reader macOS app on first launch. See the releases.
+Model files downloaded by the Audra macOS app on first launch. See the releases.
 
 - `kokoro-v1_0-fp16.safetensors` — Kokoro-82M v1.0 (https://huggingface.co/hexgrad/Kokoro-82M, Apache-2.0),
   in KokoroSwift's weight layout, converted to float16.
 - `voices.npz` — Kokoro-82M v1.0 voice style vectors (Apache-2.0).
 
-Built reproducibly by `scripts/prepare-kokoro-assets.py` in the Screen Reader repository.
+Built reproducibly by `scripts/prepare-kokoro-assets.py` in the Audra repository.
 EOF
 git -C "$REPO_DIR" init --quiet -b main
 git -C "$REPO_DIR" add README.md
 git -C "$REPO_DIR" commit --quiet -m "Add README"
 gh repo create buemura/screen-reader-models --public --source="$REPO_DIR" --push \
-    --description "Model files downloaded by Screen Reader (Kokoro-82M, Apache-2.0)"
+    --description "Model files downloaded by Audra (Kokoro-82M, Apache-2.0)"
 gh release create kokoro-model-v1 --repo buemura/screen-reader-models --title "Kokoro model v1" \
     --notes "Kokoro-82M v1.0 (Apache-2.0): fp16 weights in KokoroSwift layout and voice styles." \
     build/kokoro-assets/kokoro-v1_0-fp16.safetensors build/kokoro-assets/voices.npz
@@ -3863,8 +3863,8 @@ Expected: `67d4b879…b1f` and `9555acb6…3dc` (the full values in Global Const
 Copy the files where the app keeps them. Task 15's engine test uses them, and the app skips the download:
 
 ```bash
-mkdir -p ~/Library/Application\ Support/ScreenReader/Kokoro
-cp build/kokoro-assets/kokoro-v1_0-fp16.safetensors build/kokoro-assets/voices.npz ~/Library/Application\ Support/ScreenReader/Kokoro/
+mkdir -p ~/Library/Application\ Support/Audra/Kokoro
+cp build/kokoro-assets/kokoro-v1_0-fp16.safetensors build/kokoro-assets/voices.npz ~/Library/Application\ Support/Audra/Kokoro/
 ```
 
 ---
@@ -3940,7 +3940,7 @@ import XCTest
 final class MLXKokoroEngineTests: XCTestCase {
     private var modelDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("ScreenReader/Kokoro", isDirectory: true)
+            .appendingPathComponent("Audra/Kokoro", isDirectory: true)
     }
 
     func testMissingModelIsUnavailable() async {
@@ -4272,7 +4272,7 @@ final class AppModel: ObservableObject {
 
     private static var modelDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("ScreenReader/Kokoro", isDirectory: true)
+            .appendingPathComponent("Audra/Kokoro", isDirectory: true)
     }
 
     /// System voices, plus the natural voices once their model is downloaded.
@@ -4394,7 +4394,7 @@ In `Sources/ScreenReaderApp/ScreenReaderApp.swift`, change the menu content line
 - [ ] **Step 4: Build and test**
 
 Run: `./scripts/build-app.sh && make test 2>&1 | tail -3`
-Expected: `Built build/Screen Reader.app`; tests pass.
+Expected: `Built build/Audra.app`; tests pass.
 
 - [ ] **Step 5: Commit**
 
@@ -4430,7 +4430,7 @@ Create `THIRD_PARTY_NOTICES.md`:
 ```markdown
 # Third-party notices
 
-Screen Reader is licensed under the GNU General Public License v3.0 (see LICENSE), because it
+Audra is licensed under the GNU General Public License v3.0 (see LICENSE), because it
 includes eSpeak NG. It also includes or downloads the following:
 
 | Component | License | Source |
@@ -4483,7 +4483,7 @@ Natural voices download automatically the first time the app runs (progress show
 ```bash
 make test                  # run all tests (xcodebuild; ONLY=Target/TestClass for a subset)
 swift test --filter ScreenReaderCoreTests   # fast: core logic only
-./scripts/build-app.sh     # build "build/Screen Reader.app" (Apple Silicon, ad-hoc signed)
+./scripts/build-app.sh     # build "build/Audra.app" (Apple Silicon, ad-hoc signed)
 ```
 
 8. In Project layout, add after the `ScreenReaderCore` bullet:
@@ -4529,7 +4529,7 @@ No code changes. This step checks what unit tests can't: audio, the MLX runtime 
 - [ ] **Step 1: Fresh install**
 
 ```bash
-mv ~/Library/Application\ Support/ScreenReader/Kokoro ~/Library/Application\ Support/ScreenReader/Kokoro.bak 2>/dev/null || true
+mv ~/Library/Application\ Support/Audra/Kokoro ~/Library/Application\ Support/Audra/Kokoro.bak 2>/dev/null || true
 make run
 ```
 
@@ -4567,8 +4567,8 @@ With a long English paragraph (5+ sentences):
 1. Settings → General → **Remove**. Reading English now uses a system voice, and natural voices disappear from the pickers.
 2. Quit, turn off Wi-Fi, and run `make open`. The status shows `Download failed`; hover it to see the error. Reading still works with system voices.
 3. Turn Wi-Fi back on and click **Retry**. The model downloads and natural voices return.
-4. Restore the backup if one was made: `rm -rf ~/Library/Application\ Support/ScreenReader/Kokoro.bak`. The fresh download replaces it.
+4. Restore the backup if one was made: `rm -rf ~/Library/Application\ Support/Audra/Kokoro.bak`. The fresh download replaces it.
 
 - [ ] **Step 5: Memory**
 
-After a Kokoro reading, Activity Monitor shows Screen Reader using roughly 0.5–1 GB. After 10 minutes without Kokoro speech, it drops back down, because the model is unloaded.
+After a Kokoro reading, Activity Monitor shows Audra using roughly 0.5–1 GB. After 10 minutes without Kokoro speech, it drops back down, because the model is unloaded.

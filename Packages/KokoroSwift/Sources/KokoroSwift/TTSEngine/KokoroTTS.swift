@@ -166,7 +166,7 @@ public final class KokoroTTS {
   /// - Throws: `KokoroTTSError.tooManyTokens` if text is too long,
   ///           or `G2PProcessorError` if G2P processing fails
   /// Generates audio for text already converted to Kokoro phonemes, skipping G2P.
-  /// (Screen Reader patch: the app phonemizes non-English languages itself.)
+  /// (Audra patch: the app phonemizes non-English languages itself.)
   public func generateAudio(voice: MLXArray, phonemes: String, speed: Float = 1.0) throws -> [Float] {
     phonemeInput = phonemes
     defer { phonemeInput = nil }

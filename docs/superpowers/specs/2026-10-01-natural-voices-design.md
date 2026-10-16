@@ -115,7 +115,7 @@ Note: rule 2 (default voice if it speaks the detected language) still wins over 
 
 `@MainActor ObservableObject` with `state: notDownloaded | downloading(progress: Double) | ready | failed(message)`.
 
-- Files: `~/Library/Application Support/ScreenReader/Kokoro/kokoro-v1_0.safetensors` and `voices.npz`.
+- Files: `~/Library/Application Support/Audra/Kokoro/kokoro-v1_0.safetensors` and `voices.npz`.
 - On launch: if both files exist → `ready` (checksums verified only after download, not every launch). Otherwise start the download automatically.
 - Download with `URLSession` (behind a `ModelDownloading` protocol); store resume data on failure; verify SHA-256 against constants; move into place atomically; → `ready`.
 - `retry()` (from Settings), `remove()` (deletes the directory, → `notDownloaded`, does not auto-download again until next launch or retry).

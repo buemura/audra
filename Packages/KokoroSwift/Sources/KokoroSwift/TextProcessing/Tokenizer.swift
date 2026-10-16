@@ -16,7 +16,7 @@ final class Tokenizer {
   /// - Returns: Tokenized array that can then be passed to TTS system
   static func tokenize(phonemizedText text: String) -> [Int] {
     guard let vocab = KokoroConfig.config?.vocab else { return [] }
-    // One token per Unicode scalar, like Kokoro's Python tokenizer. (Screen Reader patch: mapping
+    // One token per Unicode scalar, like Kokoro's Python tokenizer. (Audra patch: mapping
     // Characters looked up clusters such as "ɐ̃" — vowel + combining tilde — which aren't in the
     // vocabulary, silently dropping Portuguese and French nasal vowels.)
     return text.unicodeScalars.compactMap { vocab[String($0)] }
